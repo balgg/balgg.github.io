@@ -20,30 +20,39 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="月下惊鸿影，疑是画中仙">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Blog">
-<meta property="og:url" content="http://example.com/index.html">
+  <meta name="description" content="重传机制、滑动窗口、流量控制、拥塞控制">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TCP可靠传输机制">
+<meta property="og:url" content="http://example.com/2024/01/13/TCP%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E3%80%81%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6%E3%80%81%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/index.html">
 <meta property="og:site_name" content="Blog">
-<meta property="og:description" content="月下惊鸿影，疑是画中仙">
+<meta property="og:description" content="重传机制、滑动窗口、流量控制、拥塞控制">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="c:\Users\baiaolong\AppData\Roaming\Typora\typora-user-images\image-20240109095831996.png">
+<meta property="og:image" content="c:\Users\baiaolong\AppData\Roaming\Typora\typora-user-images\image-20240109105354734.png">
+<meta property="og:image" content="c:\Users\baiaolong\AppData\Roaming\Typora\typora-user-images\image-20240109171932406.png">
+<meta property="og:image" content="c:\Users\baiaolong\AppData\Roaming\Typora\typora-user-images\image-20240109172659680.png">
+<meta property="og:image" content="c:\Users\baiaolong\AppData\Roaming\Typora\typora-user-images\image-20240109173748452.png">
+<meta property="og:image" content="c:\Users\baiaolong\AppData\Roaming\Typora\typora-user-images\image-20240109175652172.png">
+<meta property="article:published_time" content="2024-01-13T03:30:48.788Z">
+<meta property="article:modified_time" content="2024-02-10T02:15:51.924Z">
 <meta property="article:author" content="小白">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="c:\Users\baiaolong\AppData\Roaming\Typora\typora-user-images\image-20240109095831996.png">
 
-<link rel="canonical" href="http://example.com/">
+<link rel="canonical" href="http://example.com/2024/01/13/TCP%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E3%80%81%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6%E3%80%81%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>Blog</title>
+  <title>TCP可靠传输机制 | Blog</title>
   
 
 
@@ -189,199 +198,10 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content post posts-expand">
             
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/02/11/%E7%AE%97%E6%B3%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="小白">
-      <meta itemprop="description" content="月下惊鸿影，疑是画中仙">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/02/11/%E7%AE%97%E6%B3%95/" class="post-title-link" itemprop="url">算法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-02-11 23:33:44" itemprop="dateCreated datePublished" datetime="2024-02-11T23:33:44+08:00">2024-02-11</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2024-02-26 22:51:53" itemprop="dateModified" datetime="2024-02-26T22:51:53+08:00">2024-02-26</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%88%B7%E9%A2%98/" itemprop="url" rel="index"><span itemprop="name">刷题</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>2.4k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>2 分钟</span>
-            </span>
-
-        </div>
-      </header>
 
     
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>算法刷题笔记</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/02/11/%E7%AE%97%E6%B3%95/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/01/13/HTTP/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="小白">
-      <meta itemprop="description" content="月下惊鸿影，疑是画中仙">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/01/13/HTTP/" class="post-title-link" itemprop="url">HTTP</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-01-13 11:30:55" itemprop="dateCreated datePublished" datetime="2024-01-13T11:30:55+08:00">2024-01-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2024-02-10 10:15:05" itemprop="dateModified" datetime="2024-02-10T10:15:05+08:00">2024-02-10</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>2.7k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>2 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>HTTP笔记</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/01/13/HTTP/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
@@ -397,10 +217,9 @@
       <meta itemprop="name" content="Blog">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/01/13/TCP%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E3%80%81%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6%E3%80%81%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/" class="post-title-link" itemprop="url">TCP可靠传输机制</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          TCP可靠传输机制
+        </h1>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -428,7 +247,14 @@
                 </span>
             </span>
 
-          <br>
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
             <span class="post-meta-item" title="本文字数">
               <span class="post-meta-item-icon">
                 <i class="far fa-file-word"></i>
@@ -443,6 +269,7 @@
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
               <span>2 分钟</span>
             </span>
+            <div class="post-description">重传机制、滑动窗口、流量控制、拥塞控制</div>
 
         </div>
       </header>
@@ -453,125 +280,150 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>重传机制、滑动窗口、流量控制、拥塞控制</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/01/13/TCP%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E3%80%81%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6%E3%80%81%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
+        <h1 id="重传机制"><a href="#重传机制" class="headerlink" title="重传机制"></a>重传机制</h1><h2 id="超时重传"><a href="#超时重传" class="headerlink" title="超时重传"></a>超时重传</h2><p>发送数据时设定一个定时器，在规定时间内没有收到对方的ACK，就重发该数据</p>
+<p>两种情况触发</p>
+<ul>
+<li>数据包丢失（接收方没有收到数据）</li>
+<li>ACK丢失（发送方没有收到ACK）</li>
+</ul>
+<p><strong>超时重传时间 RTO 的值应该略大于报文往返 RTT 的值</strong></p>
+<p>如果超时重发的数据，再次超时的时候，又需要重传的时候，TCP 的策略是<strong>超时的间隔加倍。</strong></p>
+<p>问题：超时周期可能相对较长</p>
+<p>解决：快速重传</p>
+<h2 id="快速重传"><a href="#快速重传" class="headerlink" title="快速重传"></a>快速重传</h2><p>不以时间为驱动，而是以数据为驱动</p>
+<p>快速重传的工作方式是当收到三个相同的 ACK 报文时，会在定时器过期之前，重传丢失的报文段</p>
+<p>（第一个报文丢失，后续发送过来的报文都回复同样的ACK）</p>
+<img src="C:\Users\baiaolong\AppData\Roaming\Typora\typora-user-images\image-20240109095831996.png" alt="image-20240109095831996" style="zoom: 67%;" />
+
+<p>问题：发送方不清楚重传的时候，是重传一个（seq2），还是重传所有（因为后续接收方都回ACK2，不知道seq3、4、5报文是否也丢失）</p>
+<p>解决：SACK方法</p>
+<h2 id="SACK方法"><a href="#SACK方法" class="headerlink" title="SACK方法"></a>SACK方法</h2><p><code>SACK</code>（ Selective Acknowledgment）， <strong>选择性确认</strong></p>
+<p>实现：在TCP头部【选项】字段加一个SACK，它可以将已收到的数据信息发给发送方（发送方知道了哪些数据没收到，就只重传丢失的数据）</p>
+<h2 id="D-SACK方法"><a href="#D-SACK方法" class="headerlink" title="D-SACK方法"></a>D-SACK方法</h2><p><strong>使用了 SACK 来告诉「发送方」有哪些数据被重复接收了</strong></p>
+<p>应用于两个场景：</p>
+<ul>
+<li>ACK丢包</li>
+<li>网络延时</li>
+</ul>
+<p>区分上面两种（第一种发送方没有收到ACK，第二种发送方连续收到重复ACK）</p>
+<h1 id="流量控制"><a href="#流量控制" class="headerlink" title="流量控制"></a>流量控制</h1><h2 id="滑动窗口"><a href="#滑动窗口" class="headerlink" title="滑动窗口"></a>滑动窗口</h2><ul>
+<li><p>引入原因：</p>
+<p>TCP是每发一个数据，都要一次确认应答，上一个数据包收到应答后，再发送下一个。数据包的往返时间越长，通信效率越低。</p>
+</li>
+<li><p>窗口：实质是操作系统开辟的一个缓存空间（发送方）</p>
+<p>（收到确认应答前，在缓存空间中保留已发送的数据，如果按期收到确认应答，就将数据从缓存空间清除）</p>
+</li>
+<li><p>窗口大小：无需等待确认应答，而可以继续发送数据的最大值</p>
+</li>
+<li><p>累计确认：后面的ACK可以确认前面的数据已被接收，即使前一个ACK丢失也没关系</p>
+</li>
+</ul>
+<p>窗口大小由哪一方决定？</p>
+<p>​	接收方</p>
+<p>​	因为发送方发送的数据大小不能超过接收方的窗口大小，否则接收方会处理不过来导致丢包</p>
+<p>​	TCP有一个Window字段，是接收端告诉发送端自己还有多少缓冲区可以接收数据</p>
+<p><img src="C:\Users\baiaolong\AppData\Roaming\Typora\typora-user-images\image-20240109105354734.png" alt="image-20240109105354734"></p>
+<p><strong>注：发送窗口&lt;&#x3D;接收窗口</strong></p>
+<h2 id="缓存区与滑动窗口的关系"><a href="#缓存区与滑动窗口的关系" class="headerlink" title="缓存区与滑动窗口的关系"></a>缓存区与滑动窗口的关系</h2><p>如果发生了先减少缓存，再收缩窗口，<strong>就会出现丢包的现象</strong></p>
+<p>*<em>为了防止这种情况发生，TCP 规定是不允许同时减少缓存又收缩窗口的，而是采用先收缩窗口，过段时间再减少缓存，这样就可以避免了丢包情况。</em></p>
+<h2 id="窗口关闭"><a href="#窗口关闭" class="headerlink" title="窗口关闭"></a>窗口关闭</h2><p><strong>如果窗口大小为 0 时，就会阻止发送方给接收方传递数据，直到窗口变为非 0 为止，这就是窗口关闭。</strong></p>
+<p>如果通告窗口非0的 ACK 报文在网络中丢失，会造成死锁（双方都在等待对方发送数据）</p>
+<p>解决：<strong>只要 TCP 连接一方收到对方的零窗口通知，就启动持续计时器。</strong>如果持续计时器超时，就会发送<strong>窗口探测 ( Window probe ) 报文</strong>，而对方在确认这个探测报文时，给出自己现在的接收窗口大小。</p>
+<h2 id="糊涂窗口综合症"><a href="#糊涂窗口综合症" class="headerlink" title="糊涂窗口综合症"></a>糊涂窗口综合症</h2><p>现象：接收方腾出几个字节就立即告诉发送方窗口有几个空闲的位置，发送方会义无反顾地发送这几个字节。</p>
+<p>（头部开销很大，实际传输数据量很小）</p>
+<p>糊涂窗口综合症的现象发生在发送方和接收方：</p>
+<ul>
+<li>接收方可以通告一个小的窗口</li>
+<li>发送方可以发送小数据</li>
+</ul>
+<p>解决：</p>
+<ul>
+<li><p>发送方使用Nagle算法，满足以下条件之一才可以发送数据</p>
+<ul>
+<li>条件1：窗口大小&gt;&#x3D;MSS 且 可发送的数据大小&gt;&#x3D;MSS</li>
+<li>条件2：收到之前发送数据的 <code>ack</code> 回包</li>
+</ul>
+</li>
+<li><p>接收方的 窗口大小 &gt;&#x3D; MSS 或 缓存空间有一半可以使用，再通知发送方窗口大小非0</p>
+</li>
+</ul>
+<h1 id="拥塞控制"><a href="#拥塞控制" class="headerlink" title="拥塞控制"></a>拥塞控制</h1><p><strong>避免「发送方」的数据填满整个网络</strong></p>
+<p><strong>拥塞窗口 cwnd</strong>是发送方维护的一个状态变量，<strong>它会根据网络的拥塞程度动态变化的</strong></p>
+<p>发送窗口的值是swnd &#x3D; min(cwnd, rwnd)，也就是拥塞窗口和接收窗口中的最小值</p>
+<p>只要「发送方」没有在规定时间内接收到 ACK 应答报文，也就是<strong>发生了超时重传，就会认为网络出现了拥塞。</strong></p>
+<p>拥塞控制四种算法：</p>
+<ul>
+<li>慢启动</li>
+<li>拥塞避免</li>
+<li>拥塞发生</li>
+<li>快速恢复</li>
+</ul>
+<h2 id="慢启动"><a href="#慢启动" class="headerlink" title="慢启动"></a>慢启动</h2><p>TCP 在刚建立连接完成后，首先是有个【慢启动】的过程，这个慢启动的意思就是<strong>一点一点的提高发送数据包的数量</strong></p>
+<p>规则：<strong>当发送方每收到一个 ACK，拥塞窗口 cwnd 的大小就会加 1</strong>（<strong>指数性的增长</strong>）</p>
+<img src="C:\Users\baiaolong\AppData\Roaming\Typora\typora-user-images\image-20240109171932406.png" alt="image-20240109171932406" style="zoom:80%;" />
+
+<p>发包数量不能无限增长，什么时候停止呢？</p>
+<p>有一个叫慢启动门限 <code>ssthresh</code> （slow start threshold）状态变量。</p>
+<ul>
+<li>当 <code>cwnd</code> &lt; <code>ssthresh</code> 时，使用慢启动算法。</li>
+<li>当 <code>cwnd</code> &gt;&#x3D; <code>ssthresh</code> 时，就会使用【拥塞避免算法】。</li>
+</ul>
+<h2 id="拥塞避免算法"><a href="#拥塞避免算法" class="headerlink" title="拥塞避免算法"></a>拥塞避免算法</h2><p>当拥塞窗口 <code>cwnd</code> 「超过」慢启动门限 <code>ssthresh</code> 就会进入拥塞避免算法</p>
+<p>规则：<strong>每当收到一个 ACK 时，cwnd 增加 1&#x2F;cwnd</strong></p>
+<p>拥塞避免算法就是将原本慢启动算法的指数增长变成了线性增长，还是增长阶段，但是增长速度缓慢了一些。</p>
+<img src="C:\Users\baiaolong\AppData\Roaming\Typora\typora-user-images\image-20240109172659680.png" alt="image-20240109172659680" style="zoom: 67%;" />
+
+<p>一直增长，网络慢慢进入拥堵状态，出现丢包，<strong>触发重传机制，进入【拥塞发生算法】</strong></p>
+<h2 id="拥塞发生算法"><a href="#拥塞发生算法" class="headerlink" title="拥塞发生算法"></a>拥塞发生算法</h2><p>【超时重传时的拥塞发生算法】</p>
+<ul>
+<li>慢启动门限ssthresh 设为 拥塞窗口cwnd的1&#x2F;2（<code>ssthresh=cwnd/2</code>）</li>
+<li>cwnd 初始化</li>
+</ul>
+<img src="C:\Users\baiaolong\AppData\Roaming\Typora\typora-user-images\image-20240109173748452.png" alt="image-20240109173748452" style="zoom: 80%;" />
+
+<p>【快速重传时的拥塞发生算法】</p>
+<ul>
+<li><code>ssthresh = cwnd/2</code> </li>
+<li><code>cwnd = ssthresh</code></li>
+<li>进入<strong>快速恢复算法</strong></li>
+</ul>
+<h2 id="快速恢复算法"><a href="#快速恢复算法" class="headerlink" title="快速恢复算法"></a>快速恢复算法</h2><p>快速重传和快速恢复算法一般同时使用</p>
+<ul>
+<li>让拥塞窗口 <code> cwnd=ssthresh+3</code>  (3 的意思是确认有 3 个数据包被收到了–三次重复ACK)</li>
+<li>重传丢失的数据包</li>
+<li>如果再收到重复的ACK，那么cwnd增加1（说明此时又有别的数据包被收到了，跟前面+3一个道理）</li>
+<li>当收到新数据的ACK，令<code> cwnd=ssthresh</code>（恢复过程结束，再次进入【拥塞避免状态】）</li>
+</ul>
+<p><img src="C:\Users\baiaolong\AppData\Roaming\Typora\typora-user-images\image-20240109175652172.png" alt="image-20240109175652172"></p>
+<p>注：<strong>cwnd逐渐加1</strong>的存在是为了尽快将丢失的数据包发给目标，从而解决拥塞的根本问题（三次相同的 ACK 导致的快速重传），所以这一过程中 cwnd 反而是逐渐增大的。</p>
+
     </div>
 
     
     
     
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/12/27/webserver/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="小白">
-      <meta itemprop="description" content="月下惊鸿影，疑是画中仙">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/12/27/webserver/" class="post-title-link" itemprop="url">linux高性能并发服务器</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-12-27 20:27:16" itemprop="dateCreated datePublished" datetime="2023-12-27T20:27:16+08:00">2023-12-27</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2024-02-26 22:42:21" itemprop="dateModified" datetime="2024-02-26T22:42:21+08:00">2024-02-26</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/webserver/" itemprop="url" rel="index"><span itemprop="name">webserver</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>33k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>30 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>webserver笔记</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/12/27/webserver/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
-    </div>
 
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/12/27/webserver/" rel="prev" title="linux高性能并发服务器">
+      <i class="fa fa-chevron-left"></i> linux高性能并发服务器
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/01/13/HTTP/" rel="next" title="HTTP">
+      HTTP <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
       </footer>
+    
   </article>
   
   
-  
-
-
   
 
 
@@ -624,6 +476,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6"><span class="nav-number">1.</span> <span class="nav-text">重传机制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B6%85%E6%97%B6%E9%87%8D%E4%BC%A0"><span class="nav-number">1.1.</span> <span class="nav-text">超时重传</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%AB%E9%80%9F%E9%87%8D%E4%BC%A0"><span class="nav-number">1.2.</span> <span class="nav-text">快速重传</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SACK%E6%96%B9%E6%B3%95"><span class="nav-number">1.3.</span> <span class="nav-text">SACK方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#D-SACK%E6%96%B9%E6%B3%95"><span class="nav-number">1.4.</span> <span class="nav-text">D-SACK方法</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6"><span class="nav-number">2.</span> <span class="nav-text">流量控制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3"><span class="nav-number">2.1.</span> <span class="nav-text">滑动窗口</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%93%E5%AD%98%E5%8C%BA%E4%B8%8E%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-number">2.2.</span> <span class="nav-text">缓存区与滑动窗口的关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AA%97%E5%8F%A3%E5%85%B3%E9%97%AD"><span class="nav-number">2.3.</span> <span class="nav-text">窗口关闭</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%8A%E6%B6%82%E7%AA%97%E5%8F%A3%E7%BB%BC%E5%90%88%E7%97%87"><span class="nav-number">2.4.</span> <span class="nav-text">糊涂窗口综合症</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6"><span class="nav-number">3.</span> <span class="nav-text">拥塞控制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%85%A2%E5%90%AF%E5%8A%A8"><span class="nav-number">3.1.</span> <span class="nav-text">慢启动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8B%A5%E5%A1%9E%E9%81%BF%E5%85%8D%E7%AE%97%E6%B3%95"><span class="nav-number">3.2.</span> <span class="nav-text">拥塞避免算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8B%A5%E5%A1%9E%E5%8F%91%E7%94%9F%E7%AE%97%E6%B3%95"><span class="nav-number">3.3.</span> <span class="nav-text">拥塞发生算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%AB%E9%80%9F%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95"><span class="nav-number">3.4.</span> <span class="nav-text">快速恢复算法</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 

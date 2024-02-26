@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="HTTP笔记">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HTTP">
+<meta property="og:url" content="http://example.com/2024/01/13/HTTP/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="HTTP笔记">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://uploader.shimo.im/f/dceIyQvRA2nAilEW.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzIzNDIsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjA0MiwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.NfcEh5GsSntz9PTzP3GrthIzXWPCldkTU6OjdZZnaQg">
+<meta property="og:image" content="https://uploader.shimo.im/f/tyCeIwo1lZOxMVNm.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI1MTMsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjIxMywiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.Mf2LO68QOLRs2BaQvz7qySMRZ0J_KpRSFomzwGdIGno">
+<meta property="og:image" content="https://uploader.shimo.im/f/k7FAQCMKrQvYNloJ.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI1NjIsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjI2MiwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.VC6_SMgF0TFgPhXOGsh1SXS2SNdtxkatnuA-KyiUkpw">
+<meta property="og:image" content="https://uploader.shimo.im/f/PAHYAqxJxFdgS3U7.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI2MTYsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjMxNiwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.LATFDsceK3vgmPduHDFQvR4t00zRwCO585x_U6CCVf8">
+<meta property="og:image" content="https://uploader.shimo.im/f/21X8kwthQKqlesUX.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI2MzUsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjMzNSwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.Ha4t5SgwHyigXeiwDBCIA9hPkSXQJv3HnifD4QFa8dk">
+<meta property="og:image" content="https://uploader.shimo.im/f/OYDSteGj2OhMvUKP.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI2NTAsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjM1MCwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.O1xD5FnzBj4K790bCIWggZYYd2d8SBY7DwZzhjtbtlg">
+<meta property="og:image" content="https://uploader.shimo.im/f/vGs0nvTdg9acDNrE.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI3MDQsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjQwNCwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0._UloSkNApzUSUoOv7aMbhpXb95nk081theBjcRpAvbU">
+<meta property="og:image" content="https://uploader.shimo.im/f/vGs0nvTdg9acDNrE.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI3MDQsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjQwNCwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0._UloSkNApzUSUoOv7aMbhpXb95nk081theBjcRpAvbU">
+<meta property="og:image" content="https://uploader.shimo.im/f/MS9cZKUxBnbrpJc5.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI3MDQsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjQwNCwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0._UloSkNApzUSUoOv7aMbhpXb95nk081theBjcRpAvbU">
+<meta property="og:image" content="https://uploader.shimo.im/f/29V0Jb1dmNHZp6Hg.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzQ2MDUsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczNDMwNSwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.RquSuhiCxSxVNmXVGgTUAJtrLr29lrIuNbYDx60VeiM">
+<meta property="og:image" content="https://uploader.shimo.im/f/TsETyOBpdpZXySxB.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3NDIxOTQsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzc0MTg5NCwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.yrEY353STJ43LXfT7h7U7Fr5bRKQ6igZvuCzKnz5lVE">
+<meta property="article:published_time" content="2024-01-13T03:30:55.865Z">
+<meta property="article:modified_time" content="2024-02-10T02:15:05.595Z">
+<meta property="article:author" content="小白">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://uploader.shimo.im/f/dceIyQvRA2nAilEW.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzIzNDIsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjA0MiwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.NfcEh5GsSntz9PTzP3GrthIzXWPCldkTU6OjdZZnaQg">
+
+<link rel="canonical" href="http://example.com/2024/01/13/HTTP/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>HTTP | Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div><a target="_blank" rel="noopener" href="https://github.com/balgg" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="download fa-fw"></i>资源</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/01/13/HTTP/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="小白">
+      <meta itemprop="description" content="月下惊鸿影，疑是画中仙">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          HTTP
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-01-13 11:30:55" itemprop="dateCreated datePublished" datetime="2024-01-13T11:30:55+08:00">2024-01-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-02-10 10:15:05" itemprop="dateModified" datetime="2024-02-10T10:15:05+08:00">2024-02-10</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+            <div class="post-description">HTTP笔记</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h1><p>超文本传输协议（在计算机世界里专门在 <strong>两点之间</strong> 传输 <strong>文字、图片、音频和视频</strong>等超文本数据的 <strong>约定和规范</strong>）</p>
+<h1 id="常见状态码"><a href="#常见状态码" class="headerlink" title="常见状态码"></a>常见状态码</h1><p><img src="https://uploader.shimo.im/f/dceIyQvRA2nAilEW.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzIzNDIsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjA0MiwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.NfcEh5GsSntz9PTzP3GrthIzXWPCldkTU6OjdZZnaQg" alt="img"></p>
+<ul>
+<li>「200 OK」是最常见的成功状态码，表示一切正常。如果是非 <code>HEAD</code> 请求，服务器返回的响应头都会有 body 数据。</li>
+<li>「404 Not Found」表示请求的资源在服务器上不存在或未找到，所以无法提供给客户端。</li>
+<li><code>5xx</code> 类状态码表示客户端请求报文正确，但是服务器处理时内部发生了错误，属于服务器端的错误码。</li>
+</ul>
+<h1 id="常见字段"><a href="#常见字段" class="headerlink" title="常见字段"></a>常见字段</h1><p><em><strong>Host字段</strong></em></p>
+<p>客户端发送请求时，用来指定服务器的域名（有了Host字段，就可以将请求发往同一服务器上的不同网站）</p>
+<p><img src="https://uploader.shimo.im/f/tyCeIwo1lZOxMVNm.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI1MTMsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjIxMywiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.Mf2LO68QOLRs2BaQvz7qySMRZ0J_KpRSFomzwGdIGno" alt="img"></p>
+<p><em><strong>Content-Length 字段</strong></em></p>
+<p>服务器在返回数据时，表明本次回应的数据长度</p>
+<p>（作为 HTTP body 的边界解决“粘包”的问题）</p>
+<p><img src="https://uploader.shimo.im/f/k7FAQCMKrQvYNloJ.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI1NjIsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjI2MiwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.VC6_SMgF0TFgPhXOGsh1SXS2SNdtxkatnuA-KyiUkpw" alt="img"></p>
+<p><em><strong>Connection 字段</strong></em></p>
+<p>常用于客户端要求服务器使用「HTTP 长连接」机制，以便其他请求复用（HTTP 长连接的特点是，只要任意一端没有明确提出断开连接，则保持 TCP 连接状态。）</p>
+<p><img src="https://uploader.shimo.im/f/PAHYAqxJxFdgS3U7.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI2MTYsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjMxNiwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.LATFDsceK3vgmPduHDFQvR4t00zRwCO585x_U6CCVf8" alt="img"></p>
+<p><em><strong>Content-Type 字段</strong></em></p>
+<p>服务器响应时，告诉客户端本次数据的格式</p>
+<p><img src="https://uploader.shimo.im/f/21X8kwthQKqlesUX.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI2MzUsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjMzNSwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.Ha4t5SgwHyigXeiwDBCIA9hPkSXQJv3HnifD4QFa8dk" alt="img"></p>
+<p><em><strong>Content-Encoding 字段</strong></em></p>
+<p>说明数据的压缩方法。表示服务器返回的数据使用了什么压缩格式</p>
+<p><img src="https://uploader.shimo.im/f/OYDSteGj2OhMvUKP.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI2NTAsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjM1MCwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.O1xD5FnzBj4K790bCIWggZYYd2d8SBY7DwZzhjtbtlg" alt="img"></p>
+<h1 id="GET与POST"><a href="#GET与POST" class="headerlink" title="GET与POST"></a>GET与POST</h1><p>GET 的语义是从服务器获取指定的资源</p>
+<p><img src="https://uploader.shimo.im/f/vGs0nvTdg9acDNrE.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI3MDQsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjQwNCwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0._UloSkNApzUSUoOv7aMbhpXb95nk081theBjcRpAvbU" alt="img"></p>
+<p><img src="https://uploader.shimo.im/f/vGs0nvTdg9acDNrE.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI3MDQsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjQwNCwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0._UloSkNApzUSUoOv7aMbhpXb95nk081theBjcRpAvbU" alt="img">POST 的语义是根据请求负荷（报文body）对指定的资源做出处理</p>
+<p><img src="https://uploader.shimo.im/f/MS9cZKUxBnbrpJc5.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzI3MDQsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczMjQwNCwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0._UloSkNApzUSUoOv7aMbhpXb95nk081theBjcRpAvbU" alt="img"></p>
+<ul>
+<li><p><strong>GET对数据长度有限制</strong>（因为URL的限制），POST无限制</p>
+</li>
+<li><p><strong>GET只允许 ASCII 字符</strong>，<strong>POST无限制</strong></p>
+</li>
+<li><p><strong>GET安全</strong>（不修改服务器资源，只读）、<strong>幂等</strong>（重复操作结果相同）、<strong>可被缓存</strong>；<strong>POST不安全</strong>（修改服务器数据），<strong>不幂等</strong>，（大部分实现）<strong>不可缓存</strong></p>
+</li>
+<li><p><strong>GET 显示在 URL 上，POST 通过表单提交不显示在 URL 上</strong></p>
+<p>（有敏感数据使用POST，但并不能说 GET 不如 POST 安全，因为HTTP 传输的内容都是明文的，要避免传输过程中数据被窃取，就要使用 HTTPS ，这样所有 HTTP 的数据都会被加密传输）</p>
+</li>
+</ul>
+<p>注：get请求可以带body（通常不需要所以才不带）</p>
+<h1 id="HTTP缓存技术"><a href="#HTTP缓存技术" class="headerlink" title="HTTP缓存技术"></a>HTTP缓存技术</h1><p>强制缓存和协商缓存</p>
+<p><strong>强制缓存</strong>：</p>
+<p>​	只要<strong>浏览器判断</strong>缓存没有过期，则直接使用浏览器的本地缓存，决定是否使用缓存的主动性在于浏览器这边。</p>
+<p>利用下面这两个 HTTP 响应头部（Response Header）字段实现</p>
+<ul>
+<li><code>Cache-Control</code>， 是一个相对时间；</li>
+<li><code>Expires</code>，是一个绝对时间；</li>
+</ul>
+<p><strong>协商缓存</strong>：</p>
+<p>​	<strong>与服务端协商</strong>之后，通过协商结果来判断是否使用本地缓存</p>
+<p>协商缓存这两个字段都需要配合强制缓存中 Cache-Control 字段来使用，只有在未能命中强制缓存的时候，才能发起带有协商缓存字段的请求。</p>
+<h1 id="HTTP特性"><a href="#HTTP特性" class="headerlink" title="HTTP特性"></a>HTTP特性</h1><p>常见到版本有 HTTP&#x2F;1.1，HTTP&#x2F;2.0，HTTP&#x2F;3.0</p>
+<p><strong>HTTP&#x2F;1.1</strong></p>
+<ul>
+<li>优点：<ul>
+<li>简单（报文格式header+body）</li>
+<li>灵活和易于扩展（HTTPS、HTTP&#x2F;2.0、HTTP&#x2F;3.0）</li>
+<li>应用广泛和跨平台（台式机上的浏览器到各种手机app）</li>
+</ul>
+</li>
+<li>缺点：<ul>
+<li>无状态（双刃剑）—服务器不会去记忆 HTTP 的状态<ul>
+<li>优点：不需要额外资源记录，减轻服务器负担</li>
+<li>缺点：完成有关联性的操作时很麻烦（购物每次都要认证身份）<ul>
+<li>解决方式： Cookie 技术（在请求和响应报文中写入 Cookie 信息来控制客户端的状态）。客户端第一次请求后，会保存服务器在响应中添加的cookie，再次请求时服务器就会检查cookie</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://uploader.shimo.im/f/29V0Jb1dmNHZp6Hg.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3MzQ2MDUsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzczNDMwNSwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.RquSuhiCxSxVNmXVGgTUAJtrLr29lrIuNbYDx60VeiM" alt="img"></p>
+<ul>
+<li>明文传输（双刃剑）<ul>
+<li>方便调试，抓包可直接查看</li>
+<li>信息裸奔</li>
+</ul>
+</li>
+<li>不安全<ul>
+<li>可以用 HTTPS 方式解决，引入SSL&#x2F;TLS层</li>
+</ul>
+</li>
+</ul>
+<p>性能方面：基于 TCP&#x2F;IP，并且使用了「请求 - 应答」的通信模式，采用长连接，减少了TCP连接的重复建立和断开的额外开销，减轻服务器的负载（HTTP1.0是短连接）</p>
+<h1 id="HTTP和HTTPS"><a href="#HTTP和HTTPS" class="headerlink" title="HTTP和HTTPS"></a>HTTP和HTTPS</h1><h2 id="有哪些区别？"><a href="#有哪些区别？" class="headerlink" title="有哪些区别？"></a>有哪些区别？</h2><ul>
+<li>HTTPS 更安全，解决了HTTP明文传输的缺陷，在TCP和HTTP之间加入了SSL&#x2F;TLS安全协议，使报文能加密传输</li>
+<li>HTTPS在三次握手后，还需要进行SSL&#x2F;TLS的握手过程</li>
+<li>HTTP端口号80，HTTPS端口号443</li>
+<li>HTTPS需要申请数字证书（保证服务器身份可信）</li>
+</ul>
+<h2 id="HTTPS解决了HTTP哪些问题？"><a href="#HTTPS解决了HTTP哪些问题？" class="headerlink" title="HTTPS解决了HTTP哪些问题？"></a>HTTPS解决了HTTP哪些问题？</h2><p>1）通过<strong>混合加密</strong>方式，实现信息机密性，防止被窃听</p>
+<p>​	非对称加密（公钥和私钥）–通信建立前</p>
+<p>​	对称加密（一个密钥）–通信过程中</p>
+<p>2）通过<strong>摘要算法+数字签名</strong>的校验机制，防止数据被篡改</p>
+<p>​	摘要算法：比对哈希值</p>
+<p>​	数字签名：非对称加密（私钥加密，公钥解密）</p>
+<p>3）通过<strong>数字证书</strong>的身份认证机制，防止被冒充</p>
+<p>​	将公钥放在CA数字证书中，保证公钥身份可靠</p>
+<h2 id="HTTPS一定安全可靠吗？"><a href="#HTTPS一定安全可靠吗？" class="headerlink" title="HTTPS一定安全可靠吗？"></a>HTTPS一定安全可靠吗？</h2><p><strong>HTTPS 协议本身到目前为止还是没有任何漏洞的。</strong></p>
+<p>存在这种情况：如果有假基站将信息转发给【中间人服务器】，客户端和【中间人】完成TLS握手，【中间人】和服务器完成TLS握手，中间人不就能获取全部信息？</p>
+<p>理论上可以，但前提是在TLS握手时，客户端的用户要点击继续访问【中间人】伪造的证书，因为浏览器是能够识别出【中间人】伪造的证书是非法的，会提醒用户。</p>
+<p><strong>如何避免被【中间人抓取数据】？</strong></p>
+<p>不中病毒（被恶意导入了中间人的根证书）；不点击任何证书非法网站；采用HTTPS双向认证（增加了服务端对客户端的验证）</p>
+<h1 id="HTTP1-1-HTTP2-HTTP3-的优化"><a href="#HTTP1-1-HTTP2-HTTP3-的优化" class="headerlink" title="HTTP1.1 HTTP2 HTTP3 的优化"></a>HTTP1.1 HTTP2 HTTP3 的优化</h1><h2 id="HTTP1-1"><a href="#HTTP1-1" class="headerlink" title="HTTP1.1"></a>HTTP1.1</h2><p><strong>HTTP1.1</strong>相比HTTP1.0的改进：</p>
+<ul>
+<li>长连接：减少短连接的性能开销</li>
+<li>管道网络传输：可以连续发送请求，不用等待响应后再发送（解决了请求的队头阻塞，但仍然有响应的队头阻塞问题）</li>
+</ul>
+<p>缺陷（性能瓶颈）：</p>
+<ul>
+<li>请求 &#x2F; 响应头部（Header）未经压缩就发送</li>
+<li>队头阻塞</li>
+<li>没有请求优先级控制</li>
+<li>请求只能从客户端发出，服务器只能被动响应</li>
+</ul>
+<h2 id="HTTP2"><a href="#HTTP2" class="headerlink" title="HTTP2"></a>HTTP2</h2><ul>
+<li><p>基于HTTPS，安全性较高</p>
+</li>
+<li><p>头部压缩：HPACK算法</p>
+</li>
+<li><p>二进制格式：（原先是纯文本形式）提高了数据传输效率</p>
+</li>
+<li><p>并发传输：stream（多个stream复用一个TCP连接）</p>
+</li>
+<li><p>服务器可主动推送资源</p>
+<p>缺陷：</p>
+<p>HTTP2基于 TCP 协议来传输数据，TCP 是字节流协议，TCP 层必须保证收到的字节数据是完整且连续的，这样内核才会将缓冲区里的数据返回给 HTTP 应用，因此，当TCP层出现丢包，需要等待重传，就还会出现<strong>队头阻塞</strong>问题</p>
+</li>
+</ul>
+<h2 id="HTTP3"><a href="#HTTP3" class="headerlink" title="HTTP3"></a>HTTP3</h2><p>把 HTTP 下层的 TCP 协议改成了 <strong>UDP</strong></p>
+<p>基于 UDP 的 QUIC 协议 可以实现类似 TCP 的可靠性传输</p>
+<p>（QUIC 是一个在 UDP 之上的伪 TCP + TLS + HTTP&#x2F;2 的多路复用的协议）</p>
+<p>QUIC 有以下 3 个特点</p>
+<ul>
+<li><strong>无队头阻塞</strong>：stream相互独立</li>
+<li><strong>更快的连接建立</strong>：QUIC的三次握手（内部包含了TLS）取代了 TCP三次握手+TLS1.2四次握手  （TLS1.3三次握手）</li>
+<li><strong>连接迁移</strong>：通过连接 ID 来标记通信的两个端点（TCP是四元组）</li>
+</ul>
+<p><img src="https://uploader.shimo.im/f/TsETyOBpdpZXySxB.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MDM3NDIxOTQsImZpbGVHVUlEIjoiTjJBMWdPZzFNTXRXdzRxRCIsImlhdCI6MTcwMzc0MTg5NCwiaXNzIjoidXBsb2FkZXJfYWNjZXNzX3Jlc291cmNlIiwidXNlcklkIjozMDIwMDA3NH0.yrEY353STJ43LXfT7h7U7Fr5bRKQ6igZvuCzKnz5lVE" alt="img"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/01/13/TCP%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E3%80%81%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6%E3%80%81%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/" rel="prev" title="TCP可靠传输机制">
+      <i class="fa fa-chevron-left"></i> TCP可靠传输机制
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/02/11/%E7%AE%97%E6%B3%95/" rel="next" title="算法">
+      算法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%A6%82%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text">概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E7%8A%B6%E6%80%81%E7%A0%81"><span class="nav-number">2.</span> <span class="nav-text">常见状态码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E5%AD%97%E6%AE%B5"><span class="nav-number">3.</span> <span class="nav-text">常见字段</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#GET%E4%B8%8EPOST"><span class="nav-number">4.</span> <span class="nav-text">GET与POST</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#HTTP%E7%BC%93%E5%AD%98%E6%8A%80%E6%9C%AF"><span class="nav-number">5.</span> <span class="nav-text">HTTP缓存技术</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#HTTP%E7%89%B9%E6%80%A7"><span class="nav-number">6.</span> <span class="nav-text">HTTP特性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#HTTP%E5%92%8CHTTPS"><span class="nav-number">7.</span> <span class="nav-text">HTTP和HTTPS</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%89%E5%93%AA%E4%BA%9B%E5%8C%BA%E5%88%AB%EF%BC%9F"><span class="nav-number">7.1.</span> <span class="nav-text">有哪些区别？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTPS%E8%A7%A3%E5%86%B3%E4%BA%86HTTP%E5%93%AA%E4%BA%9B%E9%97%AE%E9%A2%98%EF%BC%9F"><span class="nav-number">7.2.</span> <span class="nav-text">HTTPS解决了HTTP哪些问题？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTPS%E4%B8%80%E5%AE%9A%E5%AE%89%E5%85%A8%E5%8F%AF%E9%9D%A0%E5%90%97%EF%BC%9F"><span class="nav-number">7.3.</span> <span class="nav-text">HTTPS一定安全可靠吗？</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#HTTP1-1-HTTP2-HTTP3-%E7%9A%84%E4%BC%98%E5%8C%96"><span class="nav-number">8.</span> <span class="nav-text">HTTP1.1 HTTP2 HTTP3 的优化</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP1-1"><span class="nav-number">8.1.</span> <span class="nav-text">HTTP1.1</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP2"><span class="nav-number">8.2.</span> <span class="nav-text">HTTP2</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP3"><span class="nav-number">8.3.</span> <span class="nav-text">HTTP3</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="小白"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">小白</p>
+  <div class="site-description" itemprop="description">月下惊鸿影，疑是画中仙</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=1909414208&auto=1&height=66"></iframe>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小白</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">40k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">36 分钟</span>
+</div>
+  <div class="powered-by">
+    <!--由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动-->
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <span id="busuanzi_container_site_pv">总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_uv">总访客数<span id="busuanzi_value_site_uv"></span>人</span>
+    <span class="post-meta-divider">|</span>
+<!-- 不蒜子计数初始值纠正 -->
+<script>
+$(document).ready(function() {
+
+    var int = setInterval(fixCount, 50);  // 50ms周期检测函数
+    var countOffset = 20000;  // 初始化首次数据
+
+    function fixCount() {            
+       if (document.getElementById("busuanzi_container_site_pv").style.display != "none")
+        {
+            $("#busuanzi_value_site_pv").html(parseInt($("#busuanzi_value_site_pv").html()) + countOffset); 
+            clearInterval(int);
+        }                  
+        if ($("#busuanzi_container_site_pv").css("display") != "none")
+        {
+            $("#busuanzi_value_site_uv").html(parseInt($("#busuanzi_value_site_uv").html()) + countOffset); // 加上初始数据 
+            clearInterval(int); // 停止检测
+        }  
+    }
+       	
+});
+</script> 
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
