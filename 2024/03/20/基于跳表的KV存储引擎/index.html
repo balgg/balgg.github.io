@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="一个用于存储和检索键值对数据的高性能、高并发的数据存储引擎">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于跳表结构的KV存储引擎">
+<meta property="og:url" content="http://example.com/2024/03/20/%E5%9F%BA%E4%BA%8E%E8%B7%B3%E8%A1%A8%E7%9A%84KV%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="一个用于存储和检索键值对数据的高性能、高并发的数据存储引擎">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="d:\Blog\source_posts\%E5%9F%BA%E4%BA%8E%E8%B7%B3%E8%A1%A8%E7%9A%84KV%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E\20210830155358392.png">
+<meta property="og:image" content="d:\Blog\source_posts\%E5%9F%BA%E4%BA%8E%E8%B7%B3%E8%A1%A8%E7%9A%84KV%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E\%E8%B7%B3%E8%A1%A8%E7%9A%84%E6%8F%92%E5%85%A5%E5%8E%9F%E7%90%86.png">
+<meta property="article:published_time" content="2024-03-20T08:05:29.087Z">
+<meta property="article:modified_time" content="2024-03-28T07:42:20.840Z">
+<meta property="article:author" content="小白">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="d:\Blog\source_posts\%E5%9F%BA%E4%BA%8E%E8%B7%B3%E8%A1%A8%E7%9A%84KV%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E\20210830155358392.png">
+
+<link rel="canonical" href="http://example.com/2024/03/20/%E5%9F%BA%E4%BA%8E%E8%B7%B3%E8%A1%A8%E7%9A%84KV%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>基于跳表结构的KV存储引擎 | Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div><a target="_blank" rel="noopener" href="https://github.com/balgg" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="download fa-fw"></i>资源</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/03/20/%E5%9F%BA%E4%BA%8E%E8%B7%B3%E8%A1%A8%E7%9A%84KV%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="小白">
+      <meta itemprop="description" content="月下惊鸿影，疑是画中仙">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          基于跳表结构的KV存储引擎
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-03-20 16:05:29" itemprop="dateCreated datePublished" datetime="2024-03-20T16:05:29+08:00">2024-03-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-03-28 15:42:20" itemprop="dateModified" datetime="2024-03-28T15:42:20+08:00">2024-03-28</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/" itemprop="url" rel="index"><span itemprop="name">项目总结</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>12k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>11 分钟</span>
+            </span>
+            <div class="post-description">一个用于存储和检索键值对数据的高性能、高并发的数据存储引擎</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="基于跳表结构的KV存储引擎"><a href="#基于跳表结构的KV存储引擎" class="headerlink" title="基于跳表结构的KV存储引擎"></a>基于跳表结构的KV存储引擎</h1><h2 id="项目简介"><a href="#项目简介" class="headerlink" title="项目简介"></a>项目简介</h2><p>基于跳表结构的KV存储引擎是一个用于存储和检索键值对数据的高性能、高并发的数据存储引擎。跳表是一种类似于平衡树的数据结构，但更简单且容易实现，并具有良好的平均时间复杂度O（logn）。该项目采用c++语言设计了一个轻量级、可靠的键值存储解决方案，实现了插入数据、删除数据、查询数据、数据展示、生成持久化文件、恢复数据以及数据库大小显示等功能</p>
+<p>本项目采用c++语言设计了一个轻量级的基于跳表的键值存储引擎，支持插入、删除、查询、展示、数据持久化和数据恢复等功能，支持多线程并发操作，在多线程随机读写的压力测试下，每秒可处理写请求数（QPS）: 24.39w，每秒可处理读请求数（QPS）: 18.41w</p>
+<h2 id="技术要点"><a href="#技术要点" class="headerlink" title="技术要点"></a>技术要点</h2><p>1、基于跳表结构和面向对象的Node类、SkipList类的开发与封装，提供了简单易用的 API 接口</p>
+<p>2、使用互斥锁等机制实现多线程并发访问的支持，防止并发插入数据时发生冲突，保证线程安全</p>
+<p>3、 实现了将内存中的数据持久化到磁盘，并在系统重启后进行恢复的功能，确保数据的持久性和可靠性</p>
+<h2 id="对外接口"><a href="#对外接口" class="headerlink" title="对外接口"></a>对外接口</h2><ul>
+<li>insertElement(int,string) &#x2F;&#x2F; 插入数据</li>
+<li>deleteElement(int) &#x2F;&#x2F; 删除数据</li>
+<li>searchElement(int) &#x2F;&#x2F; 查询数据</li>
+<li>displayList(int) &#x2F;&#x2F; 显示已存数据</li>
+<li>dumpFile(string) &#x2F;&#x2F; 数据落盘</li>
+<li>loadFile(string) &#x2F;&#x2F; 加载数据</li>
+<li>size() &#x2F;&#x2F; 获取数据规模</li>
+</ul>
+<h2 id="跳表原理"><a href="#跳表原理" class="headerlink" title="跳表原理"></a>跳表原理</h2><p>跳表的本质是由原始链表经过筛选部分节点构建成的<strong>多级索引链表</strong></p>
+<p>因此，跳表可视为多个层级的单链表组合而成</p>
+<p><img src="D:\Blog\source_posts\基于跳表的KV存储引擎\20210830155358392.png" alt="img"></p>
+<p>跳表中查找的时间复杂度是O(logn)</p>
+<p>在上述跳表中，假如查询key&#x3D;12的记录，则可以从第二级索引开始快速定位：</p>
+<ul>
+<li>遍历第二级索引，从1开始，发现7&lt;12&lt;14，7就是该层要找的索引，通过它跳到下一级索引</li>
+<li>遍历第一级索引，从7开始，发现11&lt;12&lt;14，9就是该层要找的索引，通过它跳到下一级索引</li>
+<li>遍历原始链表，从11开始，发现12&#x3D;12，12就是该层要找的最终索引</li>
+</ul>
+<p>相比于直接遍历原始链表，多级索引的存在使跳表查询效率更快，总结：</p>
+<p><strong>跳表的优点</strong>： 可以实现高效的插入、删除和查询 ，时间复杂度为O(logn).</p>
+<p><strong>跳表的缺点</strong>：需要存储多级索引，增加了额外的存储空间</p>
+<p><strong>跳表的用途</strong>：经典的以空间换时间的数据结构，常用于非关系数据库的存储引擎中</p>
+<h2 id="跳表实现"><a href="#跳表实现" class="headerlink" title="跳表实现"></a>跳表实现</h2><p>项目整体上拥有一个 skiplist.h 文件</p>
+<p>拥有两个核心类：Node 类、SkipList 类</p>
+<p>Node 类是存储引擎中用于存放实际数据的类，而 SkipList 则对外提供了组织，访问，操作 Node 类的功能</p>
+<h3 id="Node类"><a href="#Node类" class="headerlink" title="Node类"></a>Node类</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> K, <span class="keyword">typename</span> V&gt; </span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Node</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">Node</span>() &#123;&#125; </span><br><span class="line">	<span class="built_in">Node</span>(K k, V v, <span class="type">int</span>); </span><br><span class="line">	~<span class="built_in">Node</span>();</span><br><span class="line">	<span class="function">K <span class="title">get_key</span><span class="params">()</span> <span class="type">const</span></span>;</span><br><span class="line">	<span class="function">V <span class="title">get_value</span><span class="params">()</span> <span class="type">const</span></span>;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">set_value</span><span class="params">(V)</span></span>;</span><br><span class="line">	Node&lt;K, V&gt; **forward;  </span><br><span class="line">	<span class="type">int</span> node_level;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    K key;</span><br><span class="line">    V value;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>Node 类需要包含两个主要私有属性：key 和 value，分别用于存储键和值</p>
+<p>还需要一个 node_level 公共属性，用于标识节点在跳表中的层级位置</p>
+<ul>
+<li>当 node_level &#x3D; 1 时，表示当前的节点只会出现在跳表中的第 1 层</li>
+<li>当 node_level &#x3D; 2 时，表示当前的节点会出现在跳表中的第 2 层和第 1 层</li>
+<li>以此类推</li>
+</ul>
+<p>跳表搜索节点时的跳转机制有两方面：</p>
+<ol>
+<li>同一节点的多层跳转：在相同键值、不同层级节点之间的跳转（垂直）</li>
+<li>不同节点的单层跳转：在相同层级、不同键值节点之间的跳转（水平）</li>
+</ol>
+<p>可以借鉴单链表中访问 next 指针的成员函数，来实现跳表内不同节点的单层跳转</p>
+<p>采用数组结构来组织一个节点在不同层级的指针，通过变更数组下标，我们便能够实现同一节点在不同层级之间的跳转功能</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">假设一个节点在跳表中的层级为 3，那么这个节点的 forward 指针数组的大小为 3。其 forward[0] 指向该节点在第一层的下一个节点；forward[1] 指向该节点在第二层的下一个节点，forward[2] 指向该节点在第三层的下一个节点</span><br></pre></td></tr></table></figure>
+
+<p>在定义完毕 Node 类关键的属性之后，还需要一些基本的问题需要处理。例如获取 &#x2F; 设置key 对应的 value、构造函数的实现、析构函数的实现等</p>
+<p>Node类的代码实现如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;cstdlib&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;cmath&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K,<span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Node</span>&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Node</span>()&#123;&#125;</span><br><span class="line">    <span class="built_in">Node</span>(K k,V v,<span class="type">int</span> level);</span><br><span class="line">    ~<span class="built_in">Node</span>();</span><br><span class="line">    </span><br><span class="line">    <span class="function">K <span class="title">get_key</span><span class="params">()</span> <span class="type">const</span></span>;</span><br><span class="line">    <span class="function">V <span class="title">get_value</span><span class="params">()</span> <span class="type">const</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">set_value</span><span class="params">(V val)</span></span>;</span><br><span class="line">    </span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> node_level;</span><br><span class="line">    Node&lt;K,V&gt; **forwards;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    K key;</span><br><span class="line">    V value;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 构造函数</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K,<span class="keyword">typename</span> V&gt;</span><br><span class="line">Node&lt;K,V&gt; :: <span class="built_in">Node</span>(K k,V v,<span class="type">int</span> level):<span class="built_in">key</span>(k),<span class="built_in">value</span>(v),<span class="built_in">node_level</span>(level)&#123;</span><br><span class="line">    <span class="keyword">this</span>-&gt;forwards = <span class="keyword">new</span> Node&lt;K,V&gt; * [level+<span class="number">1</span>];</span><br><span class="line">    <span class="built_in">memset</span>(<span class="keyword">this</span>-&gt;forwards,<span class="number">0</span>,<span class="built_in">sizeof</span>(Node&lt;K,V&gt;*) * (level+<span class="number">1</span>));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 析构函数</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K,<span class="keyword">typename</span> V&gt;</span><br><span class="line">Node&lt;K,V&gt; :: ~<span class="built_in">Node</span>()&#123;</span><br><span class="line">    <span class="keyword">delete</span>[] forwards;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//获取键</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K,<span class="keyword">typename</span> V&gt;</span><br><span class="line">K Node&lt;K,V&gt; :: <span class="built_in">get_key</span>() <span class="type">const</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> key;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//获取值</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K,<span class="keyword">typename</span> V&gt;</span><br><span class="line">V Node&lt;K,V&gt; :: <span class="built_in">get_value</span>() <span class="type">const</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> value;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 设置值</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K,<span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="type">void</span> Node&lt;K,V&gt; :: <span class="built_in">set_value</span>(V val)&#123;</span><br><span class="line">    <span class="keyword">this</span>-&gt;value = val;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="SkipList类"><a href="#SkipList类" class="headerlink" title="SkipList类"></a>SkipList类</h3><p>SkipList 属性</p>
+<ol>
+<li>头节点：作为跳表中所有节点组织的入口点，类似于单链表</li>
+<li>最大层数：跳表中允许的最大层数</li>
+<li>当前层数：跳表当前的层数</li>
+<li>节点数量：跳表当前的组织的所有节点总数</li>
+<li>文件读写：跳表生成持久化文件和读取持久化文件的写入器和读取器</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K, <span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">SkipList</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> _max_level;              <span class="comment">// 跳表允许的最大层数</span></span><br><span class="line">    <span class="type">int</span> _skip_list_level;        <span class="comment">// 跳表当前的层数</span></span><br><span class="line">    Node&lt;K, V&gt; *_header;         <span class="comment">// 跳表的头节点</span></span><br><span class="line">    <span class="type">int</span> _element_count;          <span class="comment">// 跳表中组织的所有节点的数量</span></span><br><span class="line">    std::ofstream _file_writer;  <span class="comment">// 文件写入器</span></span><br><span class="line">    std::ifstream _file_reader;  <span class="comment">// 文件读取器</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>SkipList 成员函数</p>
+<ol>
+<li>节点创建：生成新的节点实例</li>
+<li>层级分配：为每个新创建的节点分配一个合适的层数</li>
+<li>节点插入：将节点加入到跳表中的适当位置</li>
+<li>节点搜索：在跳表中查找特定的节点</li>
+<li>节点删除：从跳表中移除指定的节点</li>
+<li>节点展示：显示跳表中所有节点的信息</li>
+<li>节点计数：获取跳表中当前的节点总数</li>
+<li>数据持久化：将跳表的数据保存到磁盘中</li>
+<li>数据加载：从磁盘加载持久化的数据到跳表中</li>
+<li>垃圾回收：对于删除的节点，需要回收其内存空间</li>
+<li>获取节点数量：获取跳表组织的节点个数</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K, <span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">SkipList</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">SkipList</span>(<span class="type">int</span>);                      <span class="comment">// 构造函数</span></span><br><span class="line">    ~<span class="built_in">SkipList</span>();                        <span class="comment">// 析构函数</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">get_random_level</span><span class="params">()</span></span>;             <span class="comment">// 获取节点的随机层级</span></span><br><span class="line">    <span class="function">Node&lt;K, V&gt; *<span class="title">create_node</span><span class="params">(K, V, <span class="type">int</span>)</span></span>; <span class="comment">// 节点创建</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">insert_element</span><span class="params">(K, V)</span></span>;           <span class="comment">// 插入节点</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">display_list</span><span class="params">()</span></span>;                <span class="comment">// 展示节点</span></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">search_element</span><span class="params">(K)</span></span>;             <span class="comment">// 搜索节点</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">delete_element</span><span class="params">(K)</span></span>;             <span class="comment">// 删除节点</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">dump_file</span><span class="params">()</span></span>;                   <span class="comment">// 持久化数据到文件</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">load_file</span><span class="params">()</span></span>;                   <span class="comment">// 从文件加载数据</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">clear</span><span class="params">(Node&lt;K, V&gt; *)</span></span>;           <span class="comment">// 递归删除节点</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">size</span><span class="params">()</span></span>;                         <span class="comment">// 跳表中的节点个数</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="get-random-level"><a href="#get-random-level" class="headerlink" title="get_random_level"></a>get_random_level</h4><p>跳表的层级选择：随机过程</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K, <span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="type">int</span> SkipList&lt;K, V&gt;::<span class="built_in">get_random_level</span>() &#123;</span><br><span class="line">   <span class="comment">// 初始化层级：每个节点至少出现在第一层。</span></span><br><span class="line">   <span class="type">int</span> k = <span class="number">1</span>;</span><br><span class="line">   <span class="comment">// 随机层级增加：使用 rand() % 2 实现抛硬币效果，决定是否升层。</span></span><br><span class="line">   <span class="keyword">while</span> (<span class="built_in">rand</span>() % <span class="number">2</span>) &#123;</span><br><span class="line">      k++;</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">// 层级限制：确保节点层级不超过最大值 _max_level。</span></span><br><span class="line">   k = (k &lt; _max_level) ? k : _max_level;</span><br><span class="line">   <span class="comment">// 返回层级：返回确定的层级值，决定节点插入的层。</span></span><br><span class="line">   <span class="keyword">return</span> k;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>采用随机过程的优点</p>
+<ul>
+<li>平衡性：随机层级分配自然保持跳表平衡，无需额外操作（如AVL或红黑树的旋转）</li>
+<li>效率：随机分配层级保证节点在各层均匀分布，实现对数时间复杂度的查找、插入和删除</li>
+<li>简单性：这种方法易于实现且效果显著，使跳表成为性能优异的简洁数据结构</li>
+</ul>
+<h4 id="search-element"><a href="#search-element" class="headerlink" title="search_element"></a>search_element</h4><p>搜索开始于跳表的顶层 _skip_list_level</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K, <span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="type">bool</span> SkipList&lt;K, V&gt;::<span class="built_in">search_element</span>(K key) &#123;</span><br><span class="line">    <span class="comment">// 定义一个指针 current，初始化为跳表的头节点 _header</span></span><br><span class="line">    Node&lt;K, V&gt; *current = _header;</span><br><span class="line">    <span class="comment">// 从跳表的最高层开始搜索</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = _skip_list_level; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">        <span class="comment">// 遍历当前层级，直到下一个节点的键值大于或等于待查找的键值</span></span><br><span class="line">        <span class="keyword">while</span> (current-&gt;forward[i] &amp;&amp; current-&gt;forward[i]-&gt;<span class="built_in">get_key</span>() &lt; key) &#123;</span><br><span class="line">            <span class="comment">// 移动到当前层的下一个节点</span></span><br><span class="line">            current = current-&gt;forward[i];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 当前节点的下一个节点的键值大于待查找的键值时，进行下沉到下一层</span></span><br><span class="line">        <span class="comment">// 下沉操作通过循环的 i-- 实现</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 检查当前层（最底层）的下一个节点的键值是否为待查找的键值</span></span><br><span class="line">    current = current-&gt;forward[<span class="number">0</span>];</span><br><span class="line">    <span class="keyword">if</span> (current &amp;&amp; current-&gt;<span class="built_in">get_key</span>() == key) &#123;</span><br><span class="line">        <span class="comment">// 如果找到匹配的键值，返回 true</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 如果没有找到匹配的键值，返回 false</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="insert-element"><a href="#insert-element" class="headerlink" title="insert_element"></a>insert_element</h4><p>跳表的插入负责构建整个跳表，是跳表中最难的部分</p>
+<p>插入过程主要涉及三个关键步骤：</p>
+<p><strong>1、确定节点层级</strong></p>
+<p>首先，我们需要为新插入的节点随机确定其所在的层级</p>
+<p><strong>2、寻找插入位置</strong></p>
+<p>通过之前讨论的搜索方法，我们能够定位到了新节点应当插入的具体位置</p>
+<p><strong>3、更新指针关系</strong></p>
+<p>最关键的步骤是在插入节点时更新各层的指针关系</p>
+<p><img src="D:\Blog\source_posts\基于跳表的KV存储引擎\跳表的插入原理.png" alt="img"></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K, <span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="type">int</span> SkipList&lt;K, V&gt;::<span class="built_in">insert_element</span>(<span class="type">const</span> K key, <span class="type">const</span> V value) &#123;</span><br><span class="line">        Node&lt;K, V&gt; *current = <span class="keyword">this</span>-&gt;_header;</span><br><span class="line">    <span class="comment">// 用于在各层更新指针的数组</span></span><br><span class="line">    Node&lt;K, V&gt; *update[_max_level + <span class="number">1</span>];  <span class="comment">// 用于记录每层中待更新指针的节点</span></span><br><span class="line">    <span class="built_in">memset</span>(update, <span class="number">0</span>, <span class="built_in">sizeof</span>(Node&lt;K, V&gt; *) * (_max_level + <span class="number">1</span>));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 从最高层向下搜索插入位置</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = _skip_list_level; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">        <span class="comment">// 寻找当前层中最接近且小于 key 的节点</span></span><br><span class="line">        <span class="keyword">while</span> (current-&gt;forward[i] != <span class="literal">NULL</span> &amp;&amp; current-&gt;forward[i]-&gt;<span class="built_in">get_key</span>() &lt; key) &#123;</span><br><span class="line">            current = current-&gt;forward[i]; <span class="comment">// 移动到下一节点</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 保存每层中该节点，以便后续插入时更新指针</span></span><br><span class="line">        update[i] = current;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 移动到最底层的下一节点，准备插入操作</span></span><br><span class="line">    current = current-&gt;forward[<span class="number">0</span>];</span><br><span class="line">    <span class="comment">// 检查待插入的键是否已存在</span></span><br><span class="line">    <span class="keyword">if</span> (current != <span class="literal">NULL</span> &amp;&amp; current-&gt;<span class="built_in">get_key</span>() == key) &#123;</span><br><span class="line">        <span class="comment">// 键已存在，取消插入</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 检查待插入的键是否已存在于跳表中</span></span><br><span class="line">    <span class="keyword">if</span> (current == <span class="literal">NULL</span> || current-&gt;<span class="built_in">get_key</span>() != key) &#123;</span><br><span class="line">        <span class="comment">// 通过随机函数决定新节点的层级高度</span></span><br><span class="line">        <span class="type">int</span> random_level = <span class="built_in">get_random_level</span>();</span><br><span class="line">        <span class="comment">// 如果新节点的层级超出了跳表的当前最高层级</span></span><br><span class="line">        <span class="keyword">if</span> (random_level &gt; _skip_list_level) &#123;</span><br><span class="line">            <span class="comment">// 对所有新的更高层级，将头节点设置为它们的前驱节点</span></span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> i = _skip_list_level + <span class="number">1</span>; i &lt;= random_level; i++) &#123;</span><br><span class="line">                update[i] = _header;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 更新跳表的当前最高层级为新节点的层级</span></span><br><span class="line">            _skip_list_level = random_level;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        Node&lt;K, V&gt; *inserted_node = <span class="built_in">create_node</span>(key, value, random_level);</span><br><span class="line">        <span class="comment">// 在各层插入新节点，同时更新前驱节点的 forward 指针</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt;= random_level; i++) &#123;</span><br><span class="line">            <span class="comment">// 新节点指向当前节点的下一个节点</span></span><br><span class="line">            inserted_node-&gt;forward[i] = update[i]-&gt;forward[i];</span><br><span class="line">            <span class="comment">// 当前节点的下一个节点更新为新节点</span></span><br><span class="line">            update[i]-&gt;forward[i] = inserted_node;</span><br><span class="line">        &#125;</span><br><span class="line">        _element_count++;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="delete-element"><a href="#delete-element" class="headerlink" title="delete_element()"></a>delete_element()</h4><p>关键步骤：</p>
+<ol>
+<li>定位待删除节点：通过搜索确定需要删除的节点位置</li>
+<li>更新指针关系：调整相关节点的指针，以从跳表中移除目标节点</li>
+<li>内存回收：释放被删除节点所占用的资源</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K, <span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="type">void</span> SkipList&lt;K, V&gt;::<span class="built_in">delete_element</span>(K key) &#123;</span><br><span class="line">    Node&lt;K, V&gt; *current = <span class="keyword">this</span>-&gt;_header;</span><br><span class="line">    Node&lt;K, V&gt; *update[_max_level + <span class="number">1</span>];</span><br><span class="line">    <span class="built_in">memset</span>(update, <span class="number">0</span>, <span class="built_in">sizeof</span>(Node&lt;K, V&gt; *) * (_max_level + <span class="number">1</span>));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 从最高层开始向下搜索待删除节点</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = _skip_list_level; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">        <span class="keyword">while</span> (current-&gt;forward[i] != <span class="literal">NULL</span> &amp;&amp; current-&gt;forward[i]-&gt;<span class="built_in">get_key</span>() &lt; key) &#123;</span><br><span class="line">            current = current-&gt;forward[i];</span><br><span class="line">        &#125;</span><br><span class="line">        update[i] = current; <span class="comment">// 记录每层待删除节点的前驱</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    current = current-&gt;forward[<span class="number">0</span>];</span><br><span class="line">    <span class="comment">// 确认找到了待删除的节点</span></span><br><span class="line">    <span class="keyword">if</span> (current != <span class="literal">NULL</span> &amp;&amp; current-&gt;<span class="built_in">get_key</span>() == key) &#123;</span><br><span class="line">        <span class="comment">// 逐层更新指针，移除节点</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt;= _skip_list_level; i++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (update[i]-&gt;forward[i] != current) <span class="keyword">break</span>;</span><br><span class="line">            update[i]-&gt;forward[i] = current-&gt;forward[i];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 调整跳表的层级</span></span><br><span class="line">        <span class="keyword">while</span> (_skip_list_level &gt; <span class="number">0</span> &amp;&amp; _header-&gt;forward[_skip_list_level] == <span class="literal">NULL</span>) &#123;</span><br><span class="line">            _skip_list_level--;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">delete</span> current; <span class="comment">// 释放节点占用的内存</span></span><br><span class="line">        _element_count--; <span class="comment">// 节点计数减一</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="数据持久化"><a href="#数据持久化" class="headerlink" title="数据持久化"></a>数据持久化</h2><h4 id="数据保存"><a href="#数据保存" class="headerlink" title="数据保存"></a>数据保存</h4><p>上述对数据的插入、搜索和删除等操作都是在内存中进行的，一旦程序终止，当前所有的操作都会失效，数据就会丢失，因此，需要实现数据的持久化存储</p>
+<p>考虑到键值对数据结构的特点，我们选择将数据保存到文件中，采用 key:value 格式进行存储，每行存储一个键值对。这种格式既简单又易于解析，适合快速的数据存取</p>
+<p>在 C++ 中，我们利用 std::ofstream 来打开文件、写入数据，并在数据写入完成后关闭文件</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K, <span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="type">void</span> SkipList&lt;K, V&gt;::<span class="built_in">dump_file</span>() &#123;</span><br><span class="line">    _file_writer.<span class="built_in">open</span>(STORE_FILE); <span class="comment">// 打开文件</span></span><br><span class="line">    Node&lt;K, V&gt;* node = <span class="keyword">this</span>-&gt;_header-&gt;forward[<span class="number">0</span>]; <span class="comment">// 从头节点开始遍历</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (node != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">        _file_writer &lt;&lt; node-&gt;<span class="built_in">get_key</span>() &lt;&lt; <span class="string">&quot;:&quot;</span> &lt;&lt; node-&gt;<span class="built_in">get_value</span>() &lt;&lt; <span class="string">&quot;;\n&quot;</span>; <span class="comment">// 写入键值对</span></span><br><span class="line">        node = node-&gt;forward[<span class="number">0</span>]; <span class="comment">// 移动到下一个节点</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    _file_writer.<span class="built_in">flush</span>(); <span class="comment">// 刷新缓冲区，确保数据完全写入</span></span><br><span class="line">    _file_writer.<span class="built_in">close</span>(); <span class="comment">// 关闭文件</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="数据读取"><a href="#数据读取" class="headerlink" title="数据读取"></a>数据读取</h4><p>数据的读取面临两个挑战：一是如何将文件中的key:value字符串解析为键值对；二是如何将读取的数据插入到内存中的跳表并建立索引</p>
+<p>首先需要一个工具函数，检验字符串的合法性</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K, <span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="type">bool</span> SkipList&lt;K, V&gt;::<span class="built_in">is_valid_string</span>(<span class="type">const</span> std::string&amp; str) &#123;</span><br><span class="line">    <span class="keyword">return</span> !str.<span class="built_in">empty</span>() &amp;&amp; str.<span class="built_in">find</span>(delimiter) != std::string::npos;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对于合法的字符串，将其分割为键和值</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K, <span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="type">void</span> SkipList&lt;K, V&gt;::<span class="built_in">get_key_value_from_string</span>(<span class="type">const</span> std::string &amp;str, std::string *key, std::string *value) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">is_valid_string</span>(str)) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    *key = str.<span class="built_in">substr</span>(<span class="number">0</span>, str.<span class="built_in">find</span>(delimiter));</span><br><span class="line">    *value = str.<span class="built_in">substr</span>(str.<span class="built_in">find</span>(delimiter) + <span class="number">1</span>, str.<span class="built_in">length</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后将数据恢复到跳表结构中，并建立必要的索引</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K, <span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="type">void</span> SkipList&lt;K, V&gt;::<span class="built_in">load_file</span>() &#123;</span><br><span class="line">    _file_reader.<span class="built_in">open</span>(STORE_FILE);</span><br><span class="line">    std::string line;</span><br><span class="line">    std::string *key = <span class="keyword">new</span> std::<span class="built_in">string</span>();</span><br><span class="line">    std::string *value = <span class="keyword">new</span> std::<span class="built_in">string</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="built_in">getline</span>(_file_reader, line)) &#123;</span><br><span class="line">        <span class="built_in">get_key_value_from_string</span>(line, key, value);</span><br><span class="line">        <span class="keyword">if</span> (key-&gt;<span class="built_in">empty</span>() || value-&gt;<span class="built_in">empty</span>()) &#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// Define key as int type</span></span><br><span class="line">        <span class="built_in">insert_element</span>(<span class="built_in">stoi</span>(*key), *value);</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;key:&quot;</span> &lt;&lt; *key &lt;&lt; <span class="string">&quot;value:&quot;</span> &lt;&lt; *value &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">delete</span> key;</span><br><span class="line">    <span class="keyword">delete</span> value;</span><br><span class="line">    _file_reader.<span class="built_in">close</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="多线程并发访问"><a href="#多线程并发访问" class="headerlink" title="多线程并发访问"></a>多线程并发访问</h2><p>在跳表插入和删除数据的过程中，在多线程的情况下，可能会出现数据不一致的问题等</p>
+<ul>
+<li>对插入节点成员函数和删除节点成员函数进行加锁</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 只有在插入和删除的时候，才会进行加锁</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K, <span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="type">int</span> SkipList&lt;K, V&gt;::<span class="built_in">insert_element</span>(<span class="type">const</span> K key, <span class="type">const</span> V value) &#123;</span><br><span class="line">    mtx.<span class="built_in">lock</span>();  <span class="comment">// 在函数第一句加锁</span></span><br><span class="line">    <span class="comment">// ... 算法过程（省略）</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (current != <span class="literal">NULL</span> &amp;&amp; current-&gt;<span class="built_in">get_key</span>() == key) &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;key: &quot;</span> &lt;&lt; key &lt;&lt; <span class="string">&quot;, exists&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">        <span class="comment">// 在算法流程中有一个验证 key 是否存在的过程</span></span><br><span class="line">        <span class="comment">// 在此处需要提前 return，所以提前解锁</span></span><br><span class="line">        mtx.<span class="built_in">unlock</span>();</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ... </span></span><br><span class="line">    mtx.<span class="built_in">unlock</span>();  <span class="comment">// 函数执行完毕后解锁</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> K, <span class="keyword">typename</span> V&gt;</span><br><span class="line"><span class="type">void</span> SkipList&lt;K, V&gt;::<span class="built_in">delete_element</span>(K key) &#123;</span><br><span class="line">    mtx.<span class="built_in">lock</span>();  <span class="comment">// 加锁</span></span><br><span class="line">    <span class="comment">// ... 算法过程（省略）</span></span><br><span class="line">    mtx.<span class="built_in">unlock</span>();  <span class="comment">// 解锁</span></span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="压力测试"><a href="#压力测试" class="headerlink" title="压力测试"></a>压力测试</h2><p>为了验证该存储引擎的性能，开发了一个压力测试程序，主要包括两部分：多线程插入操作和多线程检索操作</p>
+<p>多线程检索操作</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">cppCopy codevoid *<span class="title">getElement</span><span class="params">(<span class="type">void</span>* threadid)</span> </span>&#123;</span><br><span class="line">    <span class="type">long</span> tid; <span class="comment">// 线程ID</span></span><br><span class="line">    tid = (<span class="type">long</span>)threadid; <span class="comment">// 将void*类型的线程ID转换为long型</span></span><br><span class="line">    std::cout &lt;&lt; tid &lt;&lt; std::endl; <span class="comment">// 输出线程ID</span></span><br><span class="line">    <span class="type">int</span> tmp = TEST_COUNT/NUM_THREADS; <span class="comment">// 计算每个线程应该检索的元素数量</span></span><br><span class="line">    <span class="comment">// 循环检索元素</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i=tid*tmp, count=<span class="number">0</span>; count&lt;tmp; i++) &#123;</span><br><span class="line">        count++;</span><br><span class="line">        skipList.<span class="built_in">search_element</span>(<span class="built_in">rand</span>() % TEST_COUNT); <span class="comment">// 随机生成一个键，并尝试从跳表中检索</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">pthread_exit</span>(<span class="literal">NULL</span>); <span class="comment">// 退出线程</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>多线程插入操作</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">cppCopy codevoid *<span class="title">insertElement</span><span class="params">(<span class="type">void</span>* threadid)</span> </span>&#123;</span><br><span class="line">    <span class="type">long</span> tid; <span class="comment">// 线程ID</span></span><br><span class="line">    tid = (<span class="type">long</span>)threadid; <span class="comment">// 将void*类型的线程ID转换为long型</span></span><br><span class="line">    std::cout &lt;&lt; tid &lt;&lt; std::endl; <span class="comment">// 输出线程ID</span></span><br><span class="line">    <span class="type">int</span> tmp = TEST_COUNT/NUM_THREADS; <span class="comment">// 计算每个线程应该插入的元素数量</span></span><br><span class="line">    <span class="comment">// 循环插入元素</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i=tid*tmp, count=<span class="number">0</span>; count&lt;tmp; i++) &#123;</span><br><span class="line">        count++;</span><br><span class="line">        skipList.<span class="built_in">insert_element</span>(<span class="built_in">rand</span>() % TEST_COUNT, <span class="string">&quot;a&quot;</span>); <span class="comment">// 随机生成一个键，并插入带有&quot;a&quot;的元素</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">pthread_exit</span>(<span class="literal">NULL</span>); <span class="comment">// 退出线程</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>主函数负责初始化随机数生成器，并依次创建并管理插入操作的线程和检索操作的线程。</p>
+<p>在创建线程后，主函数开始计时，等待所有线程完成操作，并计算整个过程的耗时。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">srand</span> (<span class="built_in">time</span>(<span class="literal">NULL</span>));  </span><br><span class="line">    &#123;</span><br><span class="line"></span><br><span class="line">        <span class="type">pthread_t</span> threads[NUM_THREADS];</span><br><span class="line">        <span class="type">int</span> rc;</span><br><span class="line">        <span class="type">int</span> i;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">auto</span> start = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span>( i = <span class="number">0</span>; i &lt; NUM_THREADS; i++ ) &#123;</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;main() : creating thread, &quot;</span> &lt;&lt; i &lt;&lt; std::endl;</span><br><span class="line">            rc = <span class="built_in">pthread_create</span>(&amp;threads[i], <span class="literal">NULL</span>, insertElement, (<span class="type">void</span> *)i);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (rc) &#123;</span><br><span class="line">                std::cout &lt;&lt; <span class="string">&quot;Error:unable to create thread,&quot;</span> &lt;&lt; rc &lt;&lt; std::endl;</span><br><span class="line">                <span class="built_in">exit</span>(<span class="number">-1</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="type">void</span> *ret;</span><br><span class="line">        <span class="keyword">for</span>( i = <span class="number">0</span>; i &lt; NUM_THREADS; i++ ) &#123;</span><br><span class="line">            <span class="keyword">if</span> (<span class="built_in">pthread_join</span>(threads[i], &amp;ret) !=<span class="number">0</span> )  &#123;</span><br><span class="line">                <span class="built_in">perror</span>(<span class="string">&quot;pthread_create() error&quot;</span>); </span><br><span class="line">                <span class="built_in">exit</span>(<span class="number">3</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">auto</span> finish = std::chrono::high_resolution_clock::<span class="built_in">now</span>(); </span><br><span class="line">        std::chrono::duration&lt;<span class="type">double</span>&gt; elapsed = finish - start;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;insert elapsed:&quot;</span> &lt;&lt; elapsed.<span class="built_in">count</span>() &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">pthread_exit</span>(<span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>插入操作</p>
+<p>跳表树高：18</p>
+<p>采用随机插入数据测试：</p>
+<table>
+<thead>
+<tr>
+<th>插入数据规模（万条）</th>
+<th>耗时（秒）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>10</td>
+<td>0.316763</td>
+</tr>
+<tr>
+<td>50</td>
+<td>1.86778</td>
+</tr>
+<tr>
+<td>100</td>
+<td>4.10648</td>
+</tr>
+</tbody></table>
+<p>每秒可处理写请求数（QPS）: 24.39w</p>
+<p>取数据操作</p>
+<table>
+<thead>
+<tr>
+<th>取数据规模（万条）</th>
+<th>耗时（秒）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>10</td>
+<td>0.47148</td>
+</tr>
+<tr>
+<td>50</td>
+<td>2.56373</td>
+</tr>
+<tr>
+<td>100</td>
+<td>5.43204</td>
+</tr>
+</tbody></table>
+<p>每秒可处理读请求数（QPS）: 18.41w</p>
+<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><p>该项目适用于需要高效存储和检索键值对数据的应用场景，例如缓存系统、简单数据库、搜索引擎等。由于具有高并发性能和可靠的数据持久化功能，可以满足各种对数据存储和检索效率要求较高的场景需求</p>
+<p>非关系型数据库redis，以及levedb，rockdb其核心存储引擎的数据结构就是跳表</p>
+<p>加上一致性协议，例如raft就构成了分布式存储，再启动一个http server就可以对外提供分布式存储服务</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/03/19/%E5%BA%8F%E5%88%97%E5%8C%96%E5%92%8C%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/" rel="prev" title="序列化和反序列化">
+      <i class="fa fa-chevron-left"></i> 序列化和反序列化
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E8%B7%B3%E8%A1%A8%E7%BB%93%E6%9E%84%E7%9A%84KV%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="nav-number">1.</span> <span class="nav-text">基于跳表结构的KV存储引擎</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E7%AE%80%E4%BB%8B"><span class="nav-number">1.1.</span> <span class="nav-text">项目简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E8%A6%81%E7%82%B9"><span class="nav-number">1.2.</span> <span class="nav-text">技术要点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E5%A4%96%E6%8E%A5%E5%8F%A3"><span class="nav-number">1.3.</span> <span class="nav-text">对外接口</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B7%B3%E8%A1%A8%E5%8E%9F%E7%90%86"><span class="nav-number">1.4.</span> <span class="nav-text">跳表原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B7%B3%E8%A1%A8%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.5.</span> <span class="nav-text">跳表实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Node%E7%B1%BB"><span class="nav-number">1.5.1.</span> <span class="nav-text">Node类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SkipList%E7%B1%BB"><span class="nav-number">1.5.2.</span> <span class="nav-text">SkipList类</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#get-random-level"><span class="nav-number">1.5.2.1.</span> <span class="nav-text">get_random_level</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#search-element"><span class="nav-number">1.5.2.2.</span> <span class="nav-text">search_element</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#insert-element"><span class="nav-number">1.5.2.3.</span> <span class="nav-text">insert_element</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#delete-element"><span class="nav-number">1.5.2.4.</span> <span class="nav-text">delete_element()</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E6%8C%81%E4%B9%85%E5%8C%96"><span class="nav-number">1.6.</span> <span class="nav-text">数据持久化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E4%BF%9D%E5%AD%98"><span class="nav-number">1.6.0.1.</span> <span class="nav-text">数据保存</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%8F%96"><span class="nav-number">1.6.0.2.</span> <span class="nav-text">数据读取</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%B9%B6%E5%8F%91%E8%AE%BF%E9%97%AE"><span class="nav-number">1.7.</span> <span class="nav-text">多线程并发访问</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95"><span class="nav-number">1.8.</span> <span class="nav-text">压力测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">1.9.</span> <span class="nav-text">应用场景</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="小白"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">小白</p>
+  <div class="site-description" itemprop="description">月下惊鸿影，疑是画中仙</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=1909414208&auto=1&height=66"></iframe>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小白</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">118k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:47</span>
+</div>
+  <div class="powered-by">
+    <!--由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动-->
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <span id="busuanzi_container_site_pv">总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_uv">总访客数<span id="busuanzi_value_site_uv"></span>人</span>
+    <span class="post-meta-divider">|</span>
+<!-- 不蒜子计数初始值纠正 -->
+<script>
+$(document).ready(function() {
+
+    var int = setInterval(fixCount, 50);  // 50ms周期检测函数
+    var countOffset = 20000;  // 初始化首次数据
+
+    function fixCount() {            
+       if (document.getElementById("busuanzi_container_site_pv").style.display != "none")
+        {
+            $("#busuanzi_value_site_pv").html(parseInt($("#busuanzi_value_site_pv").html()) + countOffset); 
+            clearInterval(int);
+        }                  
+        if ($("#busuanzi_container_site_pv").css("display") != "none")
+        {
+            $("#busuanzi_value_site_uv").html(parseInt($("#busuanzi_value_site_uv").html()) + countOffset); // 加上初始数据 
+            clearInterval(int); // 停止检测
+        }  
+    }
+       	
+});
+</script> 
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

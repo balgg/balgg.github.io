@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="webserver 实战问题记录">
+<meta property="og:type" content="article">
+<meta property="og:title" content="webserver实战">
+<meta property="og:url" content="http://example.com/2024/02/27/webserver%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="webserver 实战问题记录">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="d:\Blog\source_posts\webserver%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95\image-20240227115816973.png">
+<meta property="og:image" content="d:\Blog\source_posts\webserver%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95\image-20240227115911433.png">
+<meta property="og:image" content="d:\Blog\source_posts\webserver%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95\image-20240227140903054.png">
+<meta property="og:image" content="d:\Blog\source_posts\webserver%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95\image-20240302142613500.png">
+<meta property="og:image" content="d:\Blog\source_posts\webserver%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95\image-20240305183004020.png">
+<meta property="og:image" content="d:\Blog\source\_posts\webserver%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95\image-20240305192215231.png">
+<meta property="og:image" content="d:\Blog\source\_posts\webserver%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95\image-20240305191958198.png">
+<meta property="article:published_time" content="2024-02-27T03:33:54.563Z">
+<meta property="article:modified_time" content="2024-03-28T07:49:22.085Z">
+<meta property="article:author" content="小白">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="d:\Blog\source_posts\webserver%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95\image-20240227115816973.png">
+
+<link rel="canonical" href="http://example.com/2024/02/27/webserver%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>webserver实战 | Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div><a target="_blank" rel="noopener" href="https://github.com/balgg" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-resources">
+
+    <a href="/resources/" rel="section"><i class="download fa-fw"></i>资源</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/02/27/webserver%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="小白">
+      <meta itemprop="description" content="月下惊鸿影，疑是画中仙">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          webserver实战
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-02-27 11:33:54" itemprop="dateCreated datePublished" datetime="2024-02-27T11:33:54+08:00">2024-02-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-03-28 15:49:22" itemprop="dateModified" datetime="2024-03-28T15:49:22+08:00">2024-03-28</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/" itemprop="url" rel="index"><span itemprop="name">项目总结</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>11k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+            <div class="post-description">webserver 实战问题记录</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="webserver-问题记录"><a href="#webserver-问题记录" class="headerlink" title="webserver 问题记录"></a>webserver 问题记录</h1><h2 id="mysql-安装与使用"><a href="#mysql-安装与使用" class="headerlink" title="mysql 安装与使用"></a>mysql 安装与使用</h2><p>系统环境：ubuntu 18.04</p>
+<p>mysql版本号：5.7.42</p>
+<h3 id="如何检查Mysql到底哪里出现了问题？"><a href="#如何检查Mysql到底哪里出现了问题？" class="headerlink" title="如何检查Mysql到底哪里出现了问题？"></a>如何检查Mysql到底哪里出现了问题？</h3><p>对源代码中<code>CGImysql\sql_connection_pool.cpp</code>的<code>void connection_pool::init函数</code>进行改进，将源代码改进为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">connection_pool::init</span><span class="params">(string url, string User, string PassWord, string DBName, <span class="type">int</span> Port, <span class="type">int</span> MaxConn, <span class="type">int</span> close_log)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	m_url = url;</span><br><span class="line">	m_Port = Port;</span><br><span class="line">	m_User = User;</span><br><span class="line">	m_PassWord = PassWord;</span><br><span class="line">	m_DatabaseName = DBName;</span><br><span class="line">	m_close_log = close_log;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; MaxConn; i++)</span><br><span class="line">&#123;</span><br><span class="line">	MYSQL* con = <span class="literal">NULL</span>;</span><br><span class="line">	MYSQL* ret = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">	ret = <span class="built_in">mysql_init</span>(con);</span><br><span class="line">	<span class="keyword">if</span> (ret == <span class="literal">NULL</span>)</span><br><span class="line">	&#123;</span><br><span class="line">      <span class="comment">// 如果mysql_init()返回空，那就打印该信息</span></span><br><span class="line">		<span class="built_in">LOG_ERROR</span>(<span class="string">&quot;MySQL Error: mysql_init() returns NULL&quot;</span>);</span><br><span class="line">		<span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		con = ret;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	ret = <span class="built_in">mysql_real_connect</span>(con, url.<span class="built_in">c_str</span>(), User.<span class="built_in">c_str</span>(), PassWord.<span class="built_in">c_str</span>(), DBName.<span class="built_in">c_str</span>(), Port, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">	<span class="keyword">if</span> (ret == <span class="literal">NULL</span>)</span><br><span class="line">	&#123;</span><br><span class="line">      <span class="comment">// 如果mysql_real_connect()返回空，那就使用mysql_errorh和mysql_errno打印具体的出错信息</span></span><br><span class="line">		<span class="function">string <span class="title">err_info</span><span class="params">( mysql_error(con) )</span></span>;</span><br><span class="line">		err_info = (<span class="built_in">string</span>(<span class="string">&quot;MySQL Error[errno=&quot;</span>)</span><br><span class="line">			+ std::<span class="built_in">to_string</span>(<span class="built_in">mysql_errno</span>(con)) + <span class="built_in">string</span>(<span class="string">&quot;]: &quot;</span>) + err_info);</span><br><span class="line">		<span class="built_in">LOG_ERROR</span>( err_info.<span class="built_in">c_str</span>() );</span><br><span class="line">		<span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		con = ret;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	connList.<span class="built_in">push_back</span>(con);</span><br><span class="line">	++m_FreeConn;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">reserve = <span class="built_in">sem</span>(m_FreeConn);</span><br><span class="line">m_MaxConn = m_FreeConn;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>​	<strong>改进后可以根据日志信息获取具体错误信息</strong></p>
+<h3 id="安装配置mysql"><a href="#安装配置mysql" class="headerlink" title="安装配置mysql"></a><strong>安装配置mysql</strong></h3><p><strong>问题1：日志显示</strong></p>
+<p><strong>Mysql Error</strong></p>
+<p><strong>改进后显示如下：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2024-02-27 11:01:30.474898 [erro]: MySQL Error[errno=2002]: Can&#x27;t connect to local MySQL server through socket &#x27;/var/run/mysqld/mysqld.sock&#x27; (2)</span><br></pre></td></tr></table></figure>
+
+<p><strong>原因：起初安装MYSQL时只安装了<code>mysql-server</code>而没有安装<code>mysql-client</code></strong></p>
+<p><strong>解决方法：重新安装<code>mysql-client</code></strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get update</span><br><span class="line">sudo apt-get upgrade</span><br><span class="line">sudo apt-get install mysql-server</span><br><span class="line">sudo apt-get install mysql-client</span><br></pre></td></tr></table></figure>
+
+<p><strong>问题2：日志显示</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2024-02-27 11:21:10.517526 [erro]: MySQL Error[errno=1045]: Access denied for user &#x27;root&#x27;@&#x27;localhost&#x27; (using password: YES)</span><br></pre></td></tr></table></figure>
+
+<p><strong>原因：没有服务器与mysql没有连接上</strong></p>
+<p><strong>解决方法：确认main.cpp里的数据库和你mysql数据库配置相同</strong></p>
+<p><strong>查看数据库名称和密码</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /etc/mysql</span><br><span class="line">sudo vim debian.cnf</span><br></pre></td></tr></table></figure>
+
+<p><strong><img src="D:\Blog\source_posts\webserver问题记录\image-20240227115816973.png" alt="image-20240227115816973"></strong></p>
+<p><strong>打开main.cpp修改对应配置</strong></p>
+<p><img src="D:\Blog\source_posts\webserver问题记录\image-20240227115911433.png" alt="image-20240227115911433"></p>
+<p><strong>重新编译运行即可</strong></p>
+<hr>
+<p><strong>服务器程序通常需要处理三类事件：I&#x2F;O事件、信号及定时事件。</strong></p>
+<h2 id="1、简单介绍一下你的项目"><a href="#1、简单介绍一下你的项目" class="headerlink" title="1、简单介绍一下你的项目"></a>1、简单介绍一下你的项目</h2><p>本项目是一个基于Linux平台的轻量级HTTP高并发服务器，使用线程池+Epoll实现高效的IO多路复用，采用Reactor高并发模型进行事件处理，在业务逻辑部分利用状态机解析HTTP请求报文，可以访问数据库完成web端用户注册和登录功能，同时还制作了异步日志系统来监控和记录服务器的运行状态，最终达到的效果可以实现上万的并发连接数据交换。</p>
+<p><img src="D:\Blog\source_posts\webserver问题记录\image-20240227140903054.png" alt="image-20240227140903054"></p>
+<h2 id="2、项目中的难点？"><a href="#2、项目中的难点？" class="headerlink" title="2、项目中的难点？"></a>2、项目中的难点？</h2><p>项目中主要的工作可以分为两部分：</p>
+<p>1 一部分是服务器网络框架、日志系统、存储引擎等一些基本系统的搭建，这部分的难点主要就是技术本身的理解和模型的选择，以及如何将开源的框架调整后应用到我的项目中。</p>
+<p>2 另一部分是考虑如何提高服务器的性能所做的优化，比如缓存机制、内存池等一些额外系统的搭建。这部分的难点主要是找出服务器的性能瓶颈，然后去寻找方法去突破这个瓶颈，提高服务器的性能。</p>
+<h2 id="3、项目中遇到的困难？如何解决的？"><a href="#3、项目中遇到的困难？如何解决的？" class="headerlink" title="3、项目中遇到的困难？如何解决的？"></a>3、项目中遇到的困难？如何解决的？</h2><p>1 一方面是对很多技术的理解不够深刻，难以选出最合适的技术框架，代码实现起来也遇到了很多问题，比如。。。这部分的话我主要是反复阅读相关的技术文献，先学习别人的框架和源码，再去总结不同技术之间的差异性和内在关联，需要多去尝试和摸索。</p>
+<p>2 另一方面是由于工程能力的不足，程序总会遇到一些bug。这部分的话我首先是会通过日志或错误信息去定位bug，然后推断bug出现的原因并尝试修复，如果是自己目前水平无法修复的bug，就会去网上查资料，看有没有类似问题的解决方法，如果实在解决不了的就只能摇人了，比如去stackoverflow等一些知名论坛上求助。</p>
+<h2 id="4、针对项目做了哪些优化？"><a href="#4、针对项目做了哪些优化？" class="headerlink" title="4、针对项目做了哪些优化？"></a>4、针对项目做了哪些优化？</h2><p>1、程序本身</p>
+<ul>
+<li>减少程序等待IO的事件：非阻塞IO+IO多路复用</li>
+<li>设计高性能网络框架，同步IO（主从reactor+线程池）和异步IO（proactor）</li>
+<li>减少系统调用：通过线程池、内存池和缓存机制，避免频繁申请和释放内存</li>
+<li>减少系统调用：对于文件发送，使用零拷贝函数sendfile（），避免拷贝数据到用户态</li>
+<li>尽量减少锁的使用，如果需要，尽量减小临界区（日志系统和线程池）</li>
+</ul>
+<p>2、系统参数调优</p>
+<ul>
+<li>最大文件描述符数（用户级和系统级）</li>
+<li>tcp连接的参数（半连接&#x2F;连接队列的长度、tcp syncookies）</li>
+</ul>
+<h2 id="5、项目中用到哪些设计模式？"><a href="#5、项目中用到哪些设计模式？" class="headerlink" title="5、项目中用到哪些设计模式？"></a>5、项目中用到哪些设计模式？</h2><p>单例模式：在线程池、内存池中都有用到</p>
+<p>单例模式分为懒汉式和饿汉式，两者之间的区别在于创建实例的时间不同：</p>
+<ul>
+<li>懒汉式：系统运行中，实例不存在，只有当需要使用该实例时，才会去创建（需要考虑线程安全）</li>
+<li>饿汉式：系统一运行，就初始化创建实例，当需要时直接调用（本身就线程安全）</li>
+</ul>
+<h2 id="6、从数据流的角度分析此项目？"><a href="#6、从数据流的角度分析此项目？" class="headerlink" title="6、从数据流的角度分析此项目？"></a>6、从数据流的角度分析此项目？</h2><h2 id="7、项目都有哪些模块？"><a href="#7、项目都有哪些模块？" class="headerlink" title="7、项目都有哪些模块？"></a>7、项目都有哪些模块？</h2><p>首先按照服务器编程的基本框架，分为IO处理单元、逻辑单元和数据存储单元，通过请求队列来进行内部调度。</p>
+<p>本项目采用的是epoll+非阻塞socket实现的同步IO，</p>
+<h1 id="线程池"><a href="#线程池" class="headerlink" title="线程池"></a>线程池</h1><p>半同步&#x2F;半反应堆线程池</p>
+<p>（半同步&#x2F;半异步并发模型下结合考虑IO模型和事件处理模式的变体）</p>
+<p>使用一个工作队列完全解除了主线程和工作线程的耦合关系：主线程（异步）往工作队列中插入任务，工作线程（同步）通过竞争来取得任务并执行它。</p>
+<blockquote>
+<ul>
+<li>同步I&#x2F;O模拟proactor模式</li>
+<li>半同步&#x2F;半反应堆</li>
+<li>线程池</li>
+</ul>
+</blockquote>
+<h2 id="1、介绍一下线程池"><a href="#1、介绍一下线程池" class="headerlink" title="1、介绍一下线程池"></a>1、介绍一下线程池</h2><p>首先为什么要使用线程池？</p>
+<p>如果不使用线程池，最大的一个缺陷是线程不能复用，这将导致两个问题：</p>
+<p>​	第一，任务的执行则伴随着一个新线程的创建，而动态创建新线程是比较耗费时间的，任务需要等待线程创建完后再执行，这将导致较慢的客户响应；</p>
+<p>​	第二，动态创建的线程通常只为一个客户服务，这将导致系统上产生大量细微线程，资源消耗较大</p>
+<p>此外，大量的线程会降低系统的稳定性，系统资源的分配和管理会变得困难。</p>
+<p>而线程池可以在服务器启动之初，就被完全创建好并初始化，成为静态资源，这就将线程的创建和任务的执行解耦开来，它可以在任务需要时复用线程，不仅避免了频繁创建和销毁线程所带来的时间和资源的消耗，还方便监控和管理。</p>
+<p>线程池本质上是一个空间换时间的做法，利用服务器的硬件资源换取运行效率</p>
+<p>注：</p>
+<p>线程创建的消耗：分配内存、列入调度、内存换页、清空缓存和重新读取</p>
+<p>时间:纳秒级 </p>
+<p>上下切换的耗时有大佬统计过，大概在几十纳秒到几微秒之间</p>
+<h2 id="2、线程池怎么实现的？"><a href="#2、线程池怎么实现的？" class="headerlink" title="2、线程池怎么实现的？"></a>2、线程池怎么实现的？</h2><h2 id="3、线程池中的线程数量怎么确定？"><a href="#3、线程池中的线程数量怎么确定？" class="headerlink" title="3、线程池中的线程数量怎么确定？"></a>3、线程池中的线程数量怎么确定？</h2><p>最直接的限制因素是cpu的cores数，对于cpu密集型的任务，线程数一般与核数保持一致或+1，这样可以减少上下文切换导致的开销;对于io密集型的任务，线程数一般要多于cpu的核数，因为IO一般较慢，线程间竞争的是IO，在处理IO的过程中，多于核数的线程能为cpu争取更多任务，不至于造成cpu空闲导致资源浪费。</p>
+<p>注：为什么要考虑这个问题？线程多一些不好吗？</p>
+<p>过多的线程意味着大量线程间的切换，这将占用大量的cpu时间，服务器真正处理业务逻辑的cpu时间比重不足。</p>
+<h2 id="4、如何选择哪个进程-线程去执行新任务？"><a href="#4、如何选择哪个进程-线程去执行新任务？" class="headerlink" title="4、如何选择哪个进程&#x2F;线程去执行新任务？"></a>4、如何选择哪个进程&#x2F;线程去执行新任务？</h2><p><u>知识点：进程的通信和调度；线程的同步</u></p>
+<p>具体选择哪个工作线程来为新的客户请求服务，取决于请求队列的设计（游双）</p>
+<p>这里主要涉及到进程&#x2F;线程的一些分配原则，可以从以下几个方面考虑：</p>
+<p>第一，根据调度策略主动选择线程，例如Round Robin（时间片轮转）、FCFS（先来先服务）等常见调度算法；第二，考虑负载均衡，尽量保持各个线程的负载均衡，以提高整体的性能和资源利用率；第三，线程池具有一些参数，如核心线程数、最大线程数、线程存活时间等，这些参数也会影响任务的分配方式。</p>
+<p>本项目采用的方式是：所有线程通过一个共享的工作队列来进行同步，当有新任务到来时，主线程将任务添加到工作队列中，唤醒一个等待任务的子线程，它会从工作队列中取出任务并执行，采用的是Round Robin算法，设置了核心线程数和最大线程数，当任务数量超过核心线程数时，线程池可能会根据需要创建新的线程，但数量不能超过最大线程数限制。</p>
+<h3 id="注-：1-进程-线程的调度算法？"><a href="#注-：1-进程-线程的调度算法？" class="headerlink" title="注 ：1 进程&#x2F;线程的调度算法？"></a>注 ：1 进程&#x2F;线程的调度算法？</h3><p>先来先服务、最短作业优先、高响应比优先、时间片轮转、最高优先级、多级反馈队列</p>
+<p><a target="_blank" rel="noopener" href="https://xiaolincoding.com/os/4_process/process_base.html#%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95">5.1 进程、线程基础知识 | 小林coding (xiaolincoding.com)</a></p>
+<h3 id="注-：2-怎么通知子进程-子线程有新任务？（进程间通信）"><a href="#注-：2-怎么通知子进程-子线程有新任务？（进程间通信）" class="headerlink" title="注 ：2 怎么通知子进程&#x2F;子线程有新任务？（进程间通信）"></a>注 ：2 怎么通知子进程&#x2F;子线程有新任务？（进程间通信）</h3><p>进程间通信方式有管道、消息队列、共享内存、信号量、信号和socket。</p>
+<p>线程间由于共享内存，可以把数据定义成全局的，不需要特别考虑数据通信的问题，但需要考虑线程安全。</p>
+<h3 id="注3：怎么去解决多线程竞争的问题？（线程互斥与同步）"><a href="#注3：怎么去解决多线程竞争的问题？（线程互斥与同步）" class="headerlink" title="注3：怎么去解决多线程竞争的问题？（线程互斥与同步）"></a>注3：怎么去解决多线程竞争的问题？（线程互斥与同步）</h3><p>本项目采用互斥锁、信号量和条件变量来实现线程安全，在创建线程池前就把它们事先封装成一个模块，后续直接调用。</p>
+<p>几种典型的锁：互斥锁、读写锁、自旋锁、条件变量</p>
+<p><strong>互斥锁</strong>加锁失败后，线程<strong>释放 CPU</strong> ，给其他线程（线程切换）</p>
+<p><strong>自旋锁</strong>加锁失败后，线程会<strong>占用cpu忙等待</strong>，直到它拿到锁</p>
+<p><strong>读写锁</strong>适用于能明确区分读操作和写操作的场景，<strong>读写锁在读多写少的场景，能发挥出优势</strong></p>
+<p><a target="_blank" rel="noopener" href="https://interviewguide.cn/notes/03-hunting_job/02-interview/01-01-07-basic.html#_131%E3%80%81%E4%BB%8B%E7%BB%8D%E4%B8%80%E4%B8%8B%E5%87%A0%E7%A7%8D%E5%85%B8%E5%9E%8B%E7%9A%84%E9%94%81">基础语法-121-140 | 阿秀的学习笔记 (interviewguide.cn)</a></p>
+<p>死锁：死锁产生的条件、如何避免死锁</p>
+<p>悲观锁：互斥锁、自旋锁、读写锁都是悲观锁（<strong>访问共享资源前，先要上锁</strong>。）</p>
+<p>乐观锁：<strong>先修改完共享资源，再验证这段时间内有没有发生冲突，如果没有其他线程在修改资源，那么操作完成；如果发现有其他线程已经修改过这个资源，就放弃本次操作</strong>。(也叫无锁编程)–例：在线文档</p>
+<p><strong>只有在冲突概率非常低，且加锁成本非常高的场景时，才考虑使用乐观锁</strong></p>
+<p><a target="_blank" rel="noopener" href="https://xiaolincoding.com/os/4_process/pessim_and_optimi_lock.html#%E4%B9%90%E8%A7%82%E9%94%81%E4%B8%8E%E6%82%B2%E8%A7%82%E9%94%81">5.5 什么是悲观锁、乐观锁？ | 小林coding (xiaolincoding.com)</a></p>
+<p>信号量：协调共享资源访问<img src="D:\Blog\source_posts\webserver问题记录\image-20240302142613500.png" alt="image-20240302142613500"></p>
+<h2 id="5-怎么预先分配池的资源？"><a href="#5-怎么预先分配池的资源？" class="headerlink" title="5 怎么预先分配池的资源？"></a>5 怎么预先分配池的资源？</h2><p>池在服务器启动之初就被完全创建好并初始化，称为静态资源分配</p>
+<p>我们无法预期应该分配多少资源，最简单的解决方法是分配足够多的资源（针对每个可能的客户连接都分配必要的资源），但任一时刻的客户数量可能都远远没到极限，这会导致资源的浪费（可接受）；还有一种解决方案是预先分配一定资源，当不够用时再动态分配一些并加入池中。（核心线程数、最大线程数）</p>
+<h1 id="事件处理模式（网络框架）"><a href="#事件处理模式（网络框架）" class="headerlink" title="事件处理模式（网络框架）"></a>事件处理模式（网络框架）</h1><p>先准备一个线程池threadpool.h</p>
+<p>需要线程安全同步机制 ，封装一个locker.h（包含锁、信号量和条件变量） </p>
+<p>在线程池中将任务添加到请求队列，并分配线程去获取请求队列中的任务</p>
+<p>获取到任务后执行（process）</p>
+<p>线程池在程序开始时就被创建并初始化</p>
+<h2 id="模拟proactor模式"><a href="#模拟proactor模式" class="headerlink" title="模拟proactor模式"></a><strong>模拟proactor模式</strong></h2><p>主线程（main）负责监听和IO操作，采用epoll实现io多路复用，首先将socket返回的监听文件描述符添加到epoll对象中，开始循环监听事件，epoll在内核中监听到有事件后先判断事件的类型：<strong>如果是新的客户端请求连接</strong>，我们调用accept接受请求，建立连接，（proactor模式下）并将返回的通信文件描述符connfd也添加到epoll实例对象中进行监听，后续它将作为客户端与服务器的通信通道；<strong>如果是读写数据的事件类型</strong>，直接全部取出，并将数据封装成一个任务类（http_conn类），再交给工作线程（threadpool里的子线程）进行处理。这个取数据的过程如果是在主线程里进行，工作线程只负责处理业务逻辑，就是模拟的proactor模式，因为从工作线程的角度看，它们直接获得了IO操作后的结果</p>
+<p><u>（实际的proactor是需要调用aio系列函数的，它可以在内核里完成异步i&#x2F;o操作后，再将数据传给不同的handler进行业务处理，我们在主线程的io操作其实是模拟了proactor在内核的这一过程）</u></p>
+<h2 id="reactor模式"><a href="#reactor模式" class="headerlink" title="reactor模式"></a><strong>reactor模式</strong></h2><p>主线程只负责监听，只有在监听到有新连接建立的时候，才去调用accept获取连接，然后它将新的连接直接分配给某个子线程，在子线程中再将这个连接加入epoll继续监听，并去创建一个Handler，用于处理后续可能发生的响应事件。当子线程监听到此连接上有新的事件发生时，就调用这个Handler进行处理，包括读写数据、业务逻辑和发送数据，也就是说整个IO操作是在子线程（工作线程）中完成的，并且是由应用进程主动发起read&#x2F;write来读写数据的。</p>
+<p>（proactor由操作系统完成读写数据的工作，然后通知应用进程直接处理数据）</p>
+<p>总结一下，<strong>Reactor 是非阻塞同步网络模式，感知的是就绪可读写事件</strong>，<strong>Proactor 是异步网络模式， 感知的是已完成的读写事件</strong></p>
+<p><strong>Reactor 可以理解为「来了事件操作系统通知应用进程，让应用进程来处理」</strong></p>
+<p><strong>Proactor 可以理解为「来了事件操作系统来处理，处理完再通知应用进程」</strong></p>
+<p><strong>注：这里又涉及到阻塞IO和非阻塞IO、同步IO和异步IO的知识点，往后引申一下</strong></p>
+<h2 id="阻塞io、非阻塞io、同步-异步"><a href="#阻塞io、非阻塞io、同步-异步" class="headerlink" title="阻塞io、非阻塞io、同步&#x2F;异步"></a>阻塞io、非阻塞io、同步&#x2F;异步</h2><p>阻塞IO是指用户调用read&#x2F;write等函数时，线程会被阻塞，一直等到数据准备好，并把数据从内核缓冲区拷贝到应用程序的缓冲区后，函数才会返回。其中需要注意的是，阻塞等待的是<strong>「内核数据准备好」和「数据从内核态拷贝到用户态」这两个过程</strong></p>
+<p>非阻塞IO是指，调用read&#x2F;write函数后，在数据没有准备好的情况下立即返回，程序可以继续往下执行，但它还是会不断轮询内核，直到数据准备好，内核将数据拷贝到应用程序缓冲区后，read调用才获取到结果。注意最后一次read调用获取数据时，需要等待<strong>内核态的数据拷贝到用户程序的缓冲区</strong>，这实际上是一个同步的过程。</p>
+<p>因此，无论是阻塞IO和非阻塞IO都是同步的，因为它们在<strong>数据从内核空间拷贝到应用程序空间的过程都是需要等待的</strong>，也就是说这个过程是同步的。如果内核实现的拷贝效率不高，函数调用就会在这个同步过程中等待较长时间。</p>
+<p>只有当我们调用aio系列函数（如aio_read）时，刚才说的数据准备和数据拷贝的过程都将由内核自动完成，我们全程不需要等待，也不需要主动发起拷贝动作，这才是真正的异步。</p>
+<p>（举例：食堂打饭）</p>
+<p><strong>注：由非阻塞IO的轮询机制，引出IO多路复用技术</strong></p>
+<h2 id="IO多路复用"><a href="#IO多路复用" class="headerlink" title="IO多路复用"></a>IO多路复用</h2><h3 id="IO多路复用技术主要改进的问题有两个："><a href="#IO多路复用技术主要改进的问题有两个：" class="headerlink" title="IO多路复用技术主要改进的问题有两个："></a>IO多路复用技术主要改进的问题有两个：</h3><p>​	一是为了改进非阻塞IO轮询机制下频繁的系统调用；</p>
+<p>​	二是在服务多用户时，操作系统无法在高并发场景下维护大量的进程或线程，每个进程或线程又都是用来维护socket连接的，既然为每一个请求分配一个进程&#x2F;线程的做法不合适，那有没有可能只使用一个进程&#x2F;线程来维护多个 Socket 呢？这就引出了IO多路复用技术。</p>
+<p>​	（再提一句，基于非阻塞的IO多路复用也是同步的）</p>
+<h3 id="IO多路复用的实现原理："><a href="#IO多路复用的实现原理：" class="headerlink" title="IO多路复用的实现原理："></a>IO多路复用的实现原理：</h3><p>​	IO多路复用通过select&#x2F;poll&#x2F;epoll 系统调用实现，<strong>进程可以通过一个系统调用函数从内核中获取多个事件</strong>。总的实现方式是：有网络事件时，先把所有连接传给内核，再由内核返回产生了事件的连接，然后在用户态中再处理这些请求。<strong>它用更少的资源完成更多的事</strong></p>
+<h3 id="select-poll-epoll-分别是怎样实现的（区别）："><a href="#select-poll-epoll-分别是怎样实现的（区别）：" class="headerlink" title="select&#x2F;poll&#x2F;epoll 分别是怎样实现的（区别）："></a>select&#x2F;poll&#x2F;epoll 分别是怎样实现的（区别）：</h3><p>​	select将已连接的socket都放到一个文件描述符集合，然后全部拷贝到内核中去检查，检查方式很粗暴，就是通过遍历的方式检查是否有事件产生，并将其标记为1或0，接着再把整个文件描述符集合拷贝回用户态，用户还要再遍历去找哪些事件发生，再进行处理。</p>
+<p>​	select的缺点很明显，一是2次遍历和2次拷贝既浪费资源又影响效率，二是用固定长度的BitsMap表示文件描述符集合，有数量限制。</p>
+<p>​	poll改进了select，它用动态数组来存储文件描述符，以链表形式来组织，突破了文件描述符的限制。但在其它方面本质上没有太大区别，都需要遍历和拷贝操作文件描述符集合，这种方式随着并发数上来，性能损耗会呈指数级增长（遍历的时间复杂度都是O（n））</p>
+<p>​	epoll通过两个方面，很好的解决了select和epoll的问题：</p>
+<p>一是在内核里使用<strong>红黑树</strong>来跟踪所有待检测的文件描述符，二是采用<strong>事件驱动机制</strong>，在内核里<strong>维护一个链表</strong>来记录就绪事件。</p>
+<p>​	使用场景：当监测的<strong>fd数量较小</strong>，且<strong>各个fd都很活跃的情况</strong>下，建议<strong>使用****select和poll</strong>；当监听的<strong>fd数量较</strong>多，且单位时间仅<strong>部分fd活跃</strong>的情况下，<strong>使用epoll</strong>会明显提升性能。</p>
+<p>注：epoll支持两种事件触发模式ET和LT</p>
+<p>回答：<a href="">ET模式和LT模式分别适用什么场景？</a></p>
+<p>注：EPOLLONESHOT事件</p>
+<p>回答：<a href="">EPOLLONESHOT事件</a></p>
+<h2 id="EPOLL拓展"><a href="#EPOLL拓展" class="headerlink" title="EPOLL拓展"></a>EPOLL拓展</h2><h3 id="ET模式和LT模式分别适用什么场景？"><a href="#ET模式和LT模式分别适用什么场景？" class="headerlink" title="ET模式和LT模式分别适用什么场景？"></a><a href="">ET模式和LT模式分别适用什么场景？</a></h3><p>首先区别一下它们：对于ET模式，只有一个事件从无到有才会触发，对于LT模式，一个事件只要有就会一直触发</p>
+<p>ET模式：</p>
+<p>优点：适用于高并发、实时性要求高的场景，它可以减少频繁的事件通知而带来的性能开销，并且可以更及时的响应事件。</p>
+<p>缺点：</p>
+<p>​	1 ET模式需要确保一次性读写完整数据包，否则会导致数据丢失，因此，在不能保证接受数据完整性的场景下不适用</p>
+<p>​	2 需要更复杂精确的处理逻辑</p>
+<p><strong>LT模式：</strong></p>
+<p>优点：适用于简单的IO任务，不要求应用程序实时处理文件描述符的变化，是默认的工作模式，与旧有代码兼容性更好。</p>
+<p>缺点：</p>
+<p>​	1 需要额外检查，应用程序在每次epoll_wait后都要再次检查文件描述状态，以确保及时处理就绪事件</p>
+<p>​	2 容易出现“惊群效应”，可能会导致多线程同时竞争同一个文件描述符，造成性能损耗</p>
+<h3 id="EPOLLONESHOT事件"><a href="#EPOLLONESHOT事件" class="headerlink" title="EPOLLONESHOT事件"></a><a href="">EPOLLONESHOT事件</a></h3><p>即使在ET模式下，一个socket上的某个事件也可能被多次触发，会导致多个线程同时操作一个socket。</p>
+<p>使用epoll的EPOLLONESHOT可以保证该文件描述符上的事件，只触发一个且只触发一次，再用epoll_ctl重置EPOLLONESHOT就能被再次触发。</p>
+<h2 id="为什么不使用异步io？"><a href="#为什么不使用异步io？" class="headerlink" title="为什么不使用异步io？"></a>为什么不使用异步io？</h2><p>在linux下，异步IO是不完善的，aio系列函数是由POSIX定义的异步操作接口，不是真正的操作系统级别支持的，而是在用户空间模拟出来的异步，并且仅支持基于本地文件的aio异步操作，对于网络编程中的socket是不支持的。可以使用一个线程模拟Proactor模式，专门负责IO的处理。</p>
+<p>Windows里实现了一套完整的支持socket的异步编程接口，在 Windows ⾥实现⾼性能⽹络程序可以使⽤效率更⾼的 Proactor ⽅案。</p>
+<h2 id="为什么选择模拟proactor-reactor-线程池的模式？"><a href="#为什么选择模拟proactor-reactor-线程池的模式？" class="headerlink" title="为什么选择模拟proactor&#x2F;reactor+线程池的模式？"></a>为什么选择模拟proactor&#x2F;reactor+线程池的模式？</h2><p>从程序的角度来看是为了将IO操作和业务处理解耦，从功能实现的角度看是为了提高服务器的性能</p>
+<p>具体来说 </p>
+<p>1 为什么选择proactor&#x2F;reactor这个网络框架？</p>
+<p>reactor模式是非阻塞同步IO网络框架，它通过IO多路复用实现一个线程中的多并发连接，非常适合构建高并发的网络服务器，它采用了事件驱动方式，将事件的处理与业务逻辑分离开来，使代码更清晰、更易于维护和扩展，此外它具有很好的跨平台性，可以在各种操作系统和编程语言上实现。</p>
+<p>reactor模式分为单reactor单线程、单reactor多线程、多reactor多线程。</p>
+<p>（reacto模式有 <strong>Reactor、Acceptor、Handler</strong> 这三个对象，Reactor 对象的作用是监听和分发事件，Acceptor 对象的作用是获取连接，Handler 对象的作用是处理业务。）</p>
+<p>2 为什么使用线程池?</p>
+<p>本项目采用的是单reactor多线程模式的网络框架，需要创建多个线程，这就用到了线程池。线程池可以实现线程的复用，能够避免频繁创建线程和线程切换所带来的资源消耗和时间开销。（看情况说如果不用会有哪些问题）</p>
+<hr>
+<h1 id="数据库连接池"><a href="#数据库连接池" class="headerlink" title="数据库连接池"></a>数据库连接池</h1><p>数据库目前主要用来存储用户登录的账户和密码</p>
+<h2 id="项目中用到了那些设计模式？"><a href="#项目中用到了那些设计模式？" class="headerlink" title="项目中用到了那些设计模式？"></a>项目中用到了那些设计模式？</h2><p>单例模式：数据库连接池</p>
+<p>确保只有一个连接池实例，通过statc关键字，使得对象只有在首次调用时被创建，以后每次调用都返回同一个对象的指针。</p>
+<p>单例模式可以分为懒汉式和饿汉式，两者之间的区别在于创建实例的时间不同： </p>
+<ul>
+<li>懒汉式：指系统运⾏中，实例并不存在，只有当需要使⽤该实例时，才会去创建并使⽤实例。（这种⽅式要考 虑线程安全） </li>
+<li>饿汉式：指系统⼀运⾏，就初始化创建实例，当需要时，直接调⽤即可。（本身就线程安全，没有多线程的问 题）</li>
+</ul>
+<h2 id="还做了哪些优化？"><a href="#还做了哪些优化？" class="headerlink" title="还做了哪些优化？"></a>还做了哪些优化？</h2><p>使用RAII思想设计连接池和线程池，<strong>资源获取要通过构造函数初始化，然后析构函数负责释放资源</strong>，利用了C++语言局部对象自动销毁的特性来控制连接资源的生命周期，避免了内存泄漏（智能指针本质上就是RAII思想）</p>
+<h1 id="定时器处理非活动连接"><a href="#定时器处理非活动连接" class="headerlink" title="定时器处理非活动连接"></a>定时器处理非活动连接</h1><p>本项目中，服务器主循环为每一个连接创建一个定时器，并对每个连接进行定时。另外，利用升序时间链表容器将所有定时器串联起来，若主循环接收到定时通知，则在链表中依次执行定时任务。</p>
+<p>具体的，利用<code>alarm</code>函数周期性地触发<code>SIGALRM</code>信号，信号处理函数利用管道通知主循环，主循环接收到该信号后对升序链表上所有定时器进行处理，若该段时间内没有交换数据，则将该连接关闭，释放所占用的资源。</p>
+<p>主要实现分三部分：</p>
+<p>1 定时器和信号通知流程</p>
+<p>2 定时器容器设计</p>
+<p>3 定时任务的处理</p>
+<h2 id="tcp的心跳机制（keepalive）"><a href="#tcp的心跳机制（keepalive）" class="headerlink" title="tcp的心跳机制（keepalive）"></a>tcp的心跳机制（keepalive）</h2><p>为了维持长连接</p>
+<ul>
+<li>在网络故障对端崩溃时，tcp发送的探测包无法的到回应，会认为连接已经失效</li>
+<li>对端拒绝keepalive请求</li>
+<li>配置超时时间</li>
+</ul>
+<p>定时器处理非活跃连接可以提供更好的保障：</p>
+<p>1 某些网络环境会阻止心跳机制</p>
+<p>2 由于网络流量控制或其他原因，心跳包的发送频率可能受到限制</p>
+<p>3 定时器可以提供更精确和可靠的连接状态监测</p>
+<p>4 定时器可以用于实现除了检测连接是否活跃外，监测其他连接状态，例如带宽、延迟等</p>
+<p>可以综合使用这两种机制</p>
+<h2 id="信号通知流程？"><a href="#信号通知流程？" class="headerlink" title="信号通知流程？"></a>信号通知流程？</h2><p>linux下的信号采用的是异步处理机制（中断），信号处理函数和当前进程是两条不同的执行路线。具体来说，当进程收到信号时，操作系统会中断进程当前的正常流程，转而执行信号处理函数，完成后再返回中断的地方继续执行。</p>
+<p>为避免信号处理函数执行时间过长，导致信号被屏蔽太久，本项目的信号处理函数仅用于发送信号通知主循环，将相应的处理逻辑放在主循环中执行。</p>
+<p>这样做还有一个好处，就是统一事件源，信号事件其它事件一样都可以在主循环中使用epoll来监测，从而实现统一处理。</p>
+<h1 id="日志系统"><a href="#日志系统" class="headerlink" title="日志系统"></a>日志系统</h1><h2 id="异步日志系统是怎么实现的？"><a href="#异步日志系统是怎么实现的？" class="headerlink" title="异步日志系统是怎么实现的？"></a>异步日志系统是怎么实现的？</h2><ul>
+<li>本项目中，使用单例模式创建日志系统，对服务器运行状态、错误信息和访问数据进行记录，可以根据实际情况分别使用同步或异步两种写入方式</li>
+<li>其中异步写入方式，将生产者-消费者模型封装为阻塞队列，创建一个写线程，工作线程将要写的内容push进队列，写线程从队列中取出内容，写入日志文件</li>
+<li>日志系统大致可以分成两部分，其一是单例模式与阻塞队列的定义，其二是日志类的定义与使用</li>
+</ul>
+<p>单例模式与阻塞队列实现异步的日志系统</p>
+<p>将生产出来的日志信息存储到阻塞队列之中，在后台开辟一个线程专门用于数据的输出，异步写日志的公有方法调用私有方法async_write，不断的从阻塞队列之中取出数据进行写入操作，若无数据可写，则等待通知</p>
+<p><img src="D:\Blog\source_posts\webserver问题记录\image-20240305183004020.png" alt="image-20240305183004020"></p>
+<p>阻塞队列：在多线程编程中常用于实现<strong>生产者和消费者模型</strong>的数据结构，其与普通的队列区别在于，当队列为空时，从队列获取元素的操作将会被阻塞，直到队列中被放入了元素；当队列满时，往队列里存放元素的操作也会被阻塞，直到有元素被从队列中取出</p>
+<p>单例模式：在内存中会<strong>创建且仅创建一次</strong>对象的设计模式。在程序中多次使用同一个对象且作用相同时，为了防止频繁地创建对象使得内存飙升，单例模式可以让程序仅在内存中创建一个对象，让所有需要调用的地方都共享这一单例对象。</p>
+<p>（懒汉式、饿汉式）</p>
+<p>经典的线程安全懒汉模式，使用双检测锁</p>
+<img src="D:\Blog\source\_posts\webserver问题记录\image-20240305192215231.png" alt="image-20240305192215231" style="zoom: 50%;" />
+
+<p>本项目使用局部静态变量优雅的实现懒汉模式（c++11以后要求编译器保证内部静态变量的线程安全性)，这种方式不需要加锁–effective c++</p>
+<img src="D:\Blog\source\_posts\webserver问题记录\image-20240305191958198.png" alt="image-20240305191958198" style="zoom:67%;" />
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">局部静态变量是指在函数内部声明的静态变量。与普通的局部变量不同，局部静态变量在函数每次被调用时不会重新初始化，而是在程序的生命周期内保持其值，直到程序结束。</span><br><span class="line"></span><br><span class="line">具体来说，局部静态变量有以下特点：</span><br><span class="line"></span><br><span class="line">1. 它们只能在声明它们的函数内部访问</span><br><span class="line">2. 它们在程序执行到声明处时被初始化，且只会被初始化一次</span><br><span class="line">3. 它们在函数调用结束后并不被销毁，而是保留其值供下次调用使用</span><br><span class="line"></span><br><span class="line">使用局部静态变量通常是为了实现一种“记忆”的效果，例如在函数中保存某些状态信息或者统计信息。</span><br></pre></td></tr></table></figure>
+
+<p>饿汉模式在程序运行时就定义了对象，并对其初始化，之后，不管哪个线程调用成员函数getinstance（），都返回该对象的指针，因此不需要锁，就可以实现线程安全。</p>
+<p>饿汉模式虽好，但其存在隐藏的问题：非静态对象（函数外的static对象）在不同编译单元中的初始化顺序是未定义的，如果在初始化完成之前调用 getInstance() 方法会返回一个未定义的实例。</p>
+<h2 id="为什么要使用异步日志？"><a href="#为什么要使用异步日志？" class="headerlink" title="为什么要使用异步日志？"></a>为什么要使用异步日志？</h2><p>同步写日志等待磁盘 IO 的完成对于高性能服务器的快速执行和及时响应性会造成一定的性能损失，为了减小这种损失，我们可以采用异步日志。</p>
+<p>异步日志在记录时不直接将消息写入到文件中，而是先将日志消息存储在缓冲区或队列中，然后用另外的线程负责将日志写入到文件中。</p>
+<p>它的优点是记录日志时不会阻塞当前线程，可以提高程序性能，尤其是在高并发的场景下，对QPS的影响比较小</p>
+<h2 id="如果服务器崩溃，你的日志系统会发生什么？"><a href="#如果服务器崩溃，你的日志系统会发生什么？" class="headerlink" title="如果服务器崩溃，你的日志系统会发生什么？"></a>如果服务器崩溃，你的日志系统会发生什么？</h2><p>第一，未写入文件的日志可能会丢失，造成日志信息的不完整性</p>
+<p>第二，日志文件在写入过程被截断或部分写入，可能导致文件格式损坏</p>
+<p>解决：</p>
+<p>1、采取日志回滚和恢复机制，如事务日志，系统可以根据日志中的信息重新执行或回滚操作，从而确保数据一致性和完整性</p>
+<p>2、定期备份，确保将日志写入持久化存储介质，如磁盘</p>
+<p>3、使用负载均衡、故障转移、集群等技术，即使某个服务器崩溃，系统仍然可以继续提供服务并保持日志系统的可用性。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/02/11/%E7%AE%97%E6%B3%95%E5%88%B7%E9%A2%98%E5%B0%8F%E7%BB%93/" rel="prev" title="算法">
+      <i class="fa fa-chevron-left"></i> 算法
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/02/27/c++%E8%AF%AD%E6%B3%95%E7%AC%94%E8%AE%B0/" rel="next" title="c++语法糖">
+      c++语法糖 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#webserver-%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95"><span class="nav-number">1.</span> <span class="nav-text">webserver 问题记录</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#mysql-%E5%AE%89%E8%A3%85%E4%B8%8E%E4%BD%BF%E7%94%A8"><span class="nav-number">1.1.</span> <span class="nav-text">mysql 安装与使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E6%A3%80%E6%9F%A5Mysql%E5%88%B0%E5%BA%95%E5%93%AA%E9%87%8C%E5%87%BA%E7%8E%B0%E4%BA%86%E9%97%AE%E9%A2%98%EF%BC%9F"><span class="nav-number">1.1.1.</span> <span class="nav-text">如何检查Mysql到底哪里出现了问题？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E9%85%8D%E7%BD%AEmysql"><span class="nav-number">1.1.2.</span> <span class="nav-text">安装配置mysql</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D%E4%B8%80%E4%B8%8B%E4%BD%A0%E7%9A%84%E9%A1%B9%E7%9B%AE"><span class="nav-number">1.2.</span> <span class="nav-text">1、简单介绍一下你的项目</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81%E9%A1%B9%E7%9B%AE%E4%B8%AD%E7%9A%84%E9%9A%BE%E7%82%B9%EF%BC%9F"><span class="nav-number">1.3.</span> <span class="nav-text">2、项目中的难点？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3%E3%80%81%E9%A1%B9%E7%9B%AE%E4%B8%AD%E9%81%87%E5%88%B0%E7%9A%84%E5%9B%B0%E9%9A%BE%EF%BC%9F%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E7%9A%84%EF%BC%9F"><span class="nav-number">1.4.</span> <span class="nav-text">3、项目中遇到的困难？如何解决的？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4%E3%80%81%E9%92%88%E5%AF%B9%E9%A1%B9%E7%9B%AE%E5%81%9A%E4%BA%86%E5%93%AA%E4%BA%9B%E4%BC%98%E5%8C%96%EF%BC%9F"><span class="nav-number">1.5.</span> <span class="nav-text">4、针对项目做了哪些优化？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5%E3%80%81%E9%A1%B9%E7%9B%AE%E4%B8%AD%E7%94%A8%E5%88%B0%E5%93%AA%E4%BA%9B%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%9F"><span class="nav-number">1.6.</span> <span class="nav-text">5、项目中用到哪些设计模式？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6%E3%80%81%E4%BB%8E%E6%95%B0%E6%8D%AE%E6%B5%81%E7%9A%84%E8%A7%92%E5%BA%A6%E5%88%86%E6%9E%90%E6%AD%A4%E9%A1%B9%E7%9B%AE%EF%BC%9F"><span class="nav-number">1.7.</span> <span class="nav-text">6、从数据流的角度分析此项目？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7%E3%80%81%E9%A1%B9%E7%9B%AE%E9%83%BD%E6%9C%89%E5%93%AA%E4%BA%9B%E6%A8%A1%E5%9D%97%EF%BC%9F"><span class="nav-number">1.8.</span> <span class="nav-text">7、项目都有哪些模块？</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0"><span class="nav-number">2.</span> <span class="nav-text">线程池</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81%E4%BB%8B%E7%BB%8D%E4%B8%80%E4%B8%8B%E7%BA%BF%E7%A8%8B%E6%B1%A0"><span class="nav-number">2.1.</span> <span class="nav-text">1、介绍一下线程池</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%80%8E%E4%B9%88%E5%AE%9E%E7%8E%B0%E7%9A%84%EF%BC%9F"><span class="nav-number">2.2.</span> <span class="nav-text">2、线程池怎么实现的？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3%E3%80%81%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%95%B0%E9%87%8F%E6%80%8E%E4%B9%88%E7%A1%AE%E5%AE%9A%EF%BC%9F"><span class="nav-number">2.3.</span> <span class="nav-text">3、线程池中的线程数量怎么确定？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4%E3%80%81%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E5%93%AA%E4%B8%AA%E8%BF%9B%E7%A8%8B-%E7%BA%BF%E7%A8%8B%E5%8E%BB%E6%89%A7%E8%A1%8C%E6%96%B0%E4%BB%BB%E5%8A%A1%EF%BC%9F"><span class="nav-number">2.4.</span> <span class="nav-text">4、如何选择哪个进程&#x2F;线程去执行新任务？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8-%EF%BC%9A1-%E8%BF%9B%E7%A8%8B-%E7%BA%BF%E7%A8%8B%E7%9A%84%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95%EF%BC%9F"><span class="nav-number">2.4.1.</span> <span class="nav-text">注 ：1 进程&#x2F;线程的调度算法？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8-%EF%BC%9A2-%E6%80%8E%E4%B9%88%E9%80%9A%E7%9F%A5%E5%AD%90%E8%BF%9B%E7%A8%8B-%E5%AD%90%E7%BA%BF%E7%A8%8B%E6%9C%89%E6%96%B0%E4%BB%BB%E5%8A%A1%EF%BC%9F%EF%BC%88%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1%EF%BC%89"><span class="nav-number">2.4.2.</span> <span class="nav-text">注 ：2 怎么通知子进程&#x2F;子线程有新任务？（进程间通信）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A83%EF%BC%9A%E6%80%8E%E4%B9%88%E5%8E%BB%E8%A7%A3%E5%86%B3%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%AB%9E%E4%BA%89%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%9F%EF%BC%88%E7%BA%BF%E7%A8%8B%E4%BA%92%E6%96%A5%E4%B8%8E%E5%90%8C%E6%AD%A5%EF%BC%89"><span class="nav-number">2.4.3.</span> <span class="nav-text">注3：怎么去解决多线程竞争的问题？（线程互斥与同步）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E6%80%8E%E4%B9%88%E9%A2%84%E5%85%88%E5%88%86%E9%85%8D%E6%B1%A0%E7%9A%84%E8%B5%84%E6%BA%90%EF%BC%9F"><span class="nav-number">2.5.</span> <span class="nav-text">5 怎么预先分配池的资源？</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8B%E4%BB%B6%E5%A4%84%E7%90%86%E6%A8%A1%E5%BC%8F%EF%BC%88%E7%BD%91%E7%BB%9C%E6%A1%86%E6%9E%B6%EF%BC%89"><span class="nav-number">3.</span> <span class="nav-text">事件处理模式（网络框架）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E6%8B%9Fproactor%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.1.</span> <span class="nav-text">模拟proactor模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#reactor%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.2.</span> <span class="nav-text">reactor模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%BB%E5%A1%9Eio%E3%80%81%E9%9D%9E%E9%98%BB%E5%A1%9Eio%E3%80%81%E5%90%8C%E6%AD%A5-%E5%BC%82%E6%AD%A5"><span class="nav-number">3.3.</span> <span class="nav-text">阻塞io、非阻塞io、同步&#x2F;异步</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8"><span class="nav-number">3.4.</span> <span class="nav-text">IO多路复用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8%E6%8A%80%E6%9C%AF%E4%B8%BB%E8%A6%81%E6%94%B9%E8%BF%9B%E7%9A%84%E9%97%AE%E9%A2%98%E6%9C%89%E4%B8%A4%E4%B8%AA%EF%BC%9A"><span class="nav-number">3.4.1.</span> <span class="nav-text">IO多路复用技术主要改进的问题有两个：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%EF%BC%9A"><span class="nav-number">3.4.2.</span> <span class="nav-text">IO多路复用的实现原理：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#select-poll-epoll-%E5%88%86%E5%88%AB%E6%98%AF%E6%80%8E%E6%A0%B7%E5%AE%9E%E7%8E%B0%E7%9A%84%EF%BC%88%E5%8C%BA%E5%88%AB%EF%BC%89%EF%BC%9A"><span class="nav-number">3.4.3.</span> <span class="nav-text">select&#x2F;poll&#x2F;epoll 分别是怎样实现的（区别）：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#EPOLL%E6%8B%93%E5%B1%95"><span class="nav-number">3.5.</span> <span class="nav-text">EPOLL拓展</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ET%E6%A8%A1%E5%BC%8F%E5%92%8CLT%E6%A8%A1%E5%BC%8F%E5%88%86%E5%88%AB%E9%80%82%E7%94%A8%E4%BB%80%E4%B9%88%E5%9C%BA%E6%99%AF%EF%BC%9F"><span class="nav-number">3.5.1.</span> <span class="nav-text">ET模式和LT模式分别适用什么场景？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#EPOLLONESHOT%E4%BA%8B%E4%BB%B6"><span class="nav-number">3.5.2.</span> <span class="nav-text">EPOLLONESHOT事件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E4%BD%BF%E7%94%A8%E5%BC%82%E6%AD%A5io%EF%BC%9F"><span class="nav-number">3.6.</span> <span class="nav-text">为什么不使用异步io？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%89%E6%8B%A9%E6%A8%A1%E6%8B%9Fproactor-reactor-%E7%BA%BF%E7%A8%8B%E6%B1%A0%E7%9A%84%E6%A8%A1%E5%BC%8F%EF%BC%9F"><span class="nav-number">3.7.</span> <span class="nav-text">为什么选择模拟proactor&#x2F;reactor+线程池的模式？</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9E%E6%8E%A5%E6%B1%A0"><span class="nav-number">4.</span> <span class="nav-text">数据库连接池</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E4%B8%AD%E7%94%A8%E5%88%B0%E4%BA%86%E9%82%A3%E4%BA%9B%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%9F"><span class="nav-number">4.1.</span> <span class="nav-text">项目中用到了那些设计模式？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%98%E5%81%9A%E4%BA%86%E5%93%AA%E4%BA%9B%E4%BC%98%E5%8C%96%EF%BC%9F"><span class="nav-number">4.2.</span> <span class="nav-text">还做了哪些优化？</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9A%E6%97%B6%E5%99%A8%E5%A4%84%E7%90%86%E9%9D%9E%E6%B4%BB%E5%8A%A8%E8%BF%9E%E6%8E%A5"><span class="nav-number">5.</span> <span class="nav-text">定时器处理非活动连接</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tcp%E7%9A%84%E5%BF%83%E8%B7%B3%E6%9C%BA%E5%88%B6%EF%BC%88keepalive%EF%BC%89"><span class="nav-number">5.1.</span> <span class="nav-text">tcp的心跳机制（keepalive）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E9%80%9A%E7%9F%A5%E6%B5%81%E7%A8%8B%EF%BC%9F"><span class="nav-number">5.2.</span> <span class="nav-text">信号通知流程？</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F"><span class="nav-number">6.</span> <span class="nav-text">日志系统</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F%E6%98%AF%E6%80%8E%E4%B9%88%E5%AE%9E%E7%8E%B0%E7%9A%84%EF%BC%9F"><span class="nav-number">6.1.</span> <span class="nav-text">异步日志系统是怎么实现的？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E5%BC%82%E6%AD%A5%E6%97%A5%E5%BF%97%EF%BC%9F"><span class="nav-number">6.2.</span> <span class="nav-text">为什么要使用异步日志？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E6%9E%9C%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B4%A9%E6%BA%83%EF%BC%8C%E4%BD%A0%E7%9A%84%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F%E4%BC%9A%E5%8F%91%E7%94%9F%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">6.3.</span> <span class="nav-text">如果服务器崩溃，你的日志系统会发生什么？</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="小白"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">小白</p>
+  <div class="site-description" itemprop="description">月下惊鸿影，疑是画中仙</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=1909414208&auto=1&height=66"></iframe>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小白</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">118k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:47</span>
+</div>
+  <div class="powered-by">
+    <!--由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动-->
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <span id="busuanzi_container_site_pv">总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_uv">总访客数<span id="busuanzi_value_site_uv"></span>人</span>
+    <span class="post-meta-divider">|</span>
+<!-- 不蒜子计数初始值纠正 -->
+<script>
+$(document).ready(function() {
+
+    var int = setInterval(fixCount, 50);  // 50ms周期检测函数
+    var countOffset = 20000;  // 初始化首次数据
+
+    function fixCount() {            
+       if (document.getElementById("busuanzi_container_site_pv").style.display != "none")
+        {
+            $("#busuanzi_value_site_pv").html(parseInt($("#busuanzi_value_site_pv").html()) + countOffset); 
+            clearInterval(int);
+        }                  
+        if ($("#busuanzi_container_site_pv").css("display") != "none")
+        {
+            $("#busuanzi_value_site_uv").html(parseInt($("#busuanzi_value_site_uv").html()) + countOffset); // 加上初始数据 
+            clearInterval(int); // 停止检测
+        }  
+    }
+       	
+});
+</script> 
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
